@@ -1,1 +1,610 @@
-Hello World
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>itbaan safwan</title>
+    <meta name="description" content="Personal profile of Itbaan Safwan." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@300;400&display=swap"
+        rel="stylesheet" />
+    <style>
+        @font-face {
+            font-family: 'Portfolio';
+            src: url('portfolio.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #f0f4f8;
+        }
+
+        /* ── Canvas — full viewport flood-fill background ── */
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            display: block;
+        }
+
+        /* ── Foreground canvas — grass, trees ── */
+        #fg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* ── Content sits above the canvas ── */
+        #content {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        /* ── Name block ── */
+        #name-block {
+            margin-top: 6vh;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInDown 1.6s cubic-bezier(.22, .68, 0, 1.2) 0.6s forwards;
+        }
+
+        h1.site-name {
+            font-family: 'Portfolio', 'Cinzel Decorative', serif;
+            font-weight: 700;
+            font-size: clamp(2.2rem, 5.5vw, 5rem);
+            letter-spacing: 0.12em;
+            line-height: 1.1;
+            /* Dark ink gradient so it's readable on any light/pastel background */
+            background: linear-gradient(135deg, #0d2b45 0%, #0a4a6e 40%, #1a5276 70%, #145374 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            position: relative;
+            filter: drop-shadow(0 2px 12px rgba(10, 60, 100, 0.15));
+        }
+
+        /* Shimmer sweep */
+        h1.site-name::after {
+            content: 'itbaan safwan';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 0.5) 50%,
+                    transparent 70%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 100%;
+            animation: shimmer 4s ease-in-out 2.4s infinite;
+        }
+
+        .site-divider {
+            margin: 12px auto 0;
+            width: 0%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(10, 74, 110, 0.5), transparent);
+            animation: expandLine 1.2s ease 2s forwards;
+        }
+
+        .site-subtitle {
+            margin-top: 10px;
+            font-family: 'Portfolio', 'Cinzel', serif;
+            font-weight: 300;
+            font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+            letter-spacing: 0.35em;
+            color: rgba(10, 60, 100, 0.65);
+            text-transform: lowercase;
+            opacity: 0;
+            animation: fadeIn 1s ease 2.4s forwards;
+        }
+
+        /* ── Keyframes ── */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-28px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        @keyframes expandLine {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <canvas id="fg-canvas"></canvas>
+
+    <div id="content">
+        <div id="name-block">
+            <h1 class="site-name">itbaan safwan</h1>
+            <div class="site-divider"></div>
+            <p class="site-subtitle">personal portfolio</p>
+        </div>
+    </div>
+
+    <script>
+        /* ─────────────────────────────────────────────────────────────
+         *  Flood-Fill Art via Random Walks
+         *  Ported from Processing sketch by sighack.com
+         *  https://sighack.com/post/flood-fill-art-using-random-walks
+         * ───────────────────────────────────────────────────────────── */
+        (() => {
+            'use strict';
+
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+
+            /* ── Tunables ────────────────────────────────────── */
+            const PERTURBATION = 1;     // Gaussian std-dev for color drift
+            const POISSON_RADIUS = 50;    // Min distance between seed points
+            const POISSON_TRIES = 30;    // Candidates per Poisson step
+            const ITERS_PER_FRAME = 10000; // Pixel flood ops per animation frame
+            /* ─────────────────────────────────────────────────── */
+
+            /* 8-connected neighbour offsets */
+            const NX = [-1, -1, -1, 0, 0, 1, 1, 1];
+            const NY = [-1, 0, 1, -1, 1, -1, 0, 1];
+
+            let W, H;
+            let imageData;   // full-canvas ImageData
+            let visited;     // Uint8Array – 1 if pixel coloured
+            let pts;         // flat Int32Array pool for pending points
+            let ptsHead;     // ring-buffer isn't needed; use swap-array approach
+            let ptsLen;      // current number of points (pairs)
+            let fillDone;
+
+            /* ── Gaussian random (Box-Muller) ─────────────────── */
+            function gauss() {
+                let u = 0, v = 0;
+                while (u === 0) u = Math.random();
+                while (v === 0) v = Math.random();
+                return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+            }
+
+            /* ── HSL → RGB (returns [r,g,b] 0-255) ─────────────── */
+            function hslToRgb(h, s, l) {
+                s /= 100; l /= 100;
+                const a = s * Math.min(l, 1 - l);
+                const f = n => {
+                    const k = (n + h / 30) % 12;
+                    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+                };
+                return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+            }
+
+            /* ── Per-pixel helpers ───────────────────────────── */
+            function getPixelRGB(x, y) {
+                const i = (y * W + x) * 4;
+                return [imageData.data[i], imageData.data[i + 1], imageData.data[i + 2]];
+            }
+
+            function setPixelRGB(x, y, r, g, b) {
+                const i = (y * W + x) * 4;
+                imageData.data[i] = r;
+                imageData.data[i + 1] = g;
+                imageData.data[i + 2] = b;
+                imageData.data[i + 3] = 255;
+            }
+
+            /* ── Colour mutation (Gaussian drift) ─────────────── */
+            function mutate(r, g, b) {
+                const p = PERTURBATION;
+                return [
+                    Math.max(0, Math.min(255, Math.round(r + gauss() * p))),
+                    Math.max(0, Math.min(255, Math.round(g + gauss() * p))),
+                    Math.max(0, Math.min(255, Math.round(b + gauss() * p))),
+                ];
+            }
+
+            /* ── Seed a pixel ────────────────────────────────── */
+            function seedPixel(x, y, r, g, b) {
+                x = Math.round(x); y = Math.round(y);
+                if (x < 0 || x >= W || y < 0 || y >= H) return;
+                if (visited[y * W + x]) return;
+                setPixelRGB(x, y, r, g, b);
+                visited[y * W + x] = 1;
+                // push point pair
+                if (ptsLen * 2 >= pts.length) {
+                    const bigger = new Int32Array(pts.length * 2);
+                    bigger.set(pts);
+                    pts = bigger;
+                }
+                pts[ptsLen * 2] = x;
+                pts[ptsLen * 2 + 1] = y;
+                ptsLen++;
+            }
+
+            /* ── Poisson disk sampling (Bridson) ─────────────── */
+            function poissonDisk(radius, k) {
+                const cell = radius / Math.SQRT2;
+                const gcols = Math.ceil(W / cell) + 1;
+                const grows = Math.ceil(H / cell) + 1;
+                const grid = new Int32Array(gcols * grows).fill(-1);
+                const result = [];   // flat [x0,y0, x1,y1, ...]
+                const active = [];
+
+                function gIdx(x, y) {
+                    return Math.floor(y / cell) * gcols + Math.floor(x / cell);
+                }
+                function addPt(x, y) {
+                    const pi = result.length >> 1;
+                    result.push(x, y);
+                    active.push(pi);
+                    grid[gIdx(x, y)] = pi;
+                }
+
+                addPt(Math.random() * W, Math.random() * H);
+
+                while (active.length > 0) {
+                    const ai = Math.floor(Math.random() * active.length);
+                    const pi = active[ai];
+                    const px = result[pi * 2], py = result[pi * 2 + 1];
+                    let found = false;
+
+                    for (let t = 0; t < k; t++) {
+                        const angle = Math.random() * 2 * Math.PI;
+                        const r = radius + Math.random() * radius;
+                        const nx = px + r * Math.cos(angle);
+                        const ny = py + r * Math.sin(angle);
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+
+                        const col = Math.floor(nx / cell);
+                        const row = Math.floor(ny / cell);
+                        let ok = true;
+
+                        outer:
+                        for (let dc = -2; dc <= 2; dc++) {
+                            for (let dr = -2; dr <= 2; dr++) {
+                                const nc = col + dc, nr = row + dr;
+                                if (nc < 0 || nc >= gcols || nr < 0 || nr >= grows) continue;
+                                const ni = grid[nr * gcols + nc];
+                                if (ni < 0) continue;
+                                const dx = result[ni * 2] - nx, dy = result[ni * 2 + 1] - ny;
+                                if (dx * dx + dy * dy < radius * radius) { ok = false; break outer; }
+                            }
+                        }
+                        if (!ok) continue;
+
+                        addPt(nx, ny);
+                        found = true;
+                        break;
+                    }
+
+                    if (!found) {
+                        active[ai] = active[active.length - 1];
+                        active.pop();
+                    }
+                }
+                return result;
+            }
+
+            /* ── Run N flood-fill iterations ─────────────────── */
+            function runIterations(n) {
+                const data = imageData.data;
+                for (let k = 0; k < n; k++) {
+                    if (ptsLen === 0) { fillDone = true; return; }
+
+                    /* O(1) swap-remove a random pending point */
+                    const ri = Math.floor(Math.random() * ptsLen);
+                    const px = pts[ri * 2], py = pts[ri * 2 + 1];
+                    ptsLen--;
+                    pts[ri * 2] = pts[ptsLen * 2];
+                    pts[ri * 2 + 1] = pts[ptsLen * 2 + 1];
+
+                    /* Read source colour from ImageData */
+                    const si = (py * W + px) * 4;
+                    const sr = data[si], sg = data[si + 1], sb = data[si + 2];
+
+                    /* Spread to up to 8 neighbours */
+                    for (let d = 0; d < 8; d++) {
+                        const nx = px + NX[d], ny = py + NY[d];
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                        const vi = ny * W + nx;
+                        if (visited[vi]) continue;
+
+                        const [nr, ng, nb] = mutate(sr, sg, sb);
+                        const di = vi * 4;
+                        data[di] = nr;
+                        data[di + 1] = ng;
+                        data[di + 2] = nb;
+                        data[di + 3] = 255;
+                        visited[vi] = 1;
+
+                        /* grow pts buffer if needed */
+                        if (ptsLen * 2 >= pts.length) {
+                            const bigger = new Int32Array(pts.length * 2);
+                            bigger.set(pts);
+                            pts = bigger;
+                        }
+                        pts[ptsLen * 2] = nx;
+                        pts[ptsLen * 2 + 1] = ny;
+                        ptsLen++;
+                    }
+                }
+            }
+
+            /* ── Initialise everything ───────────────────────── */
+            function init() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+
+                imageData = ctx.createImageData(W, H);
+                imageData.data.fill(255); // start white
+
+                visited = new Uint8Array(W * H);
+                pts = new Int32Array(Math.max(W * H, 1024) * 2);
+                ptsLen = 0;
+                fillDone = false;
+
+                /* Single seed at the centre */
+                const hue = Math.random() * 360;
+                const sat = 30 + Math.random() * 45;
+                const lig = 68 + Math.random() * 18;
+                const [r, g, b] = hslToRgb(hue, sat, lig);
+                seedPixel(W / 2, H / 2, r, g, b);
+
+                /* Render the seed pixels immediately */
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            /* ── Animation loop ──────────────────────────────── */
+            let lastTs = 0;
+            function frame(now) {
+                if (!fillDone) {
+                    /* run more iterations if we have CPU budget */
+                    const budget = Math.max(1, Math.round(ITERS_PER_FRAME * Math.min((now - lastTs) / 16.7, 2)));
+                    lastTs = now;
+                    runIterations(budget);
+                    ctx.putImageData(imageData, 0, 0);
+                }
+                requestAnimationFrame(frame);
+            }
+
+            /* ── Boot ────────────────────────────────────────── */
+            init();
+            requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
+
+            /* Re-init on resize */
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(init, 200);
+            });
+
+        })();
+    </script>
+
+    <script>
+        /* ─────────────────────────────────────────────────────────
+         *  Foreground — Procedural Grass & Recursive Trees
+         * ───────────────────────────────────────────────────────── */
+        (() => {
+            'use strict';
+
+            const canvas = document.getElementById('fg-canvas');
+            const ctx = canvas.getContext('2d');
+
+            let W, H, groundBaseY;
+            let blades = [];
+            let startTime = null;
+
+            /* ── Seeded xorshift32 RNG — keeps tree shape identical each frame ── */
+            function makeRng(seed) {
+                let s = (seed ^ 0xdeadbeef) >>> 0 || 1;
+                return () => {
+                    s ^= s << 13; s ^= s >> 17; s ^= s << 5;
+                    return (s >>> 0) / 0x100000000;
+                };
+            }
+
+            /* ── Organic wavy ground line ── */
+            function groundY(x) {
+                return groundBaseY
+                    + Math.sin(x * 0.009) * 6
+                    + Math.sin(x * 0.019 + 2.1) * 3
+                    + Math.cos(x * 0.005 + 0.7) * 4;
+            }
+
+            /* ── Ground fill ── */
+            function drawGround() {
+                ctx.beginPath();
+                ctx.moveTo(-1, H + 1);
+                ctx.lineTo(W + 1, H + 1);
+                for (let x = W; x >= 0; x -= 3) ctx.lineTo(x, groundY(x));
+                ctx.closePath();
+                const g = ctx.createLinearGradient(0, groundBaseY - 12, 0, H);
+                g.addColorStop(0, 'hsl(112, 40%, 26%)');
+                g.addColorStop(0.3, 'hsl(115, 38%, 18%)');
+                g.addColorStop(1, 'hsl(118, 33%, 10%)');
+                ctx.fillStyle = g;
+                ctx.fill();
+            }
+
+            /* ── Build grass blade data (once per resize) ── */
+            function buildGrass() {
+                blades = [];
+                const rng = makeRng(55555);
+
+                /* back layer — shorter, lighter, subtle */
+                for (let x = 0; x <= W; x += 3 + rng() * 4) {
+                    blades.push({
+                        x, h: 12 + rng() * 18, lean: (rng() - .5) * 16,
+                        phase: rng() * 6.28, layer: 0, lw: 0.8,
+                        hue: 100 + rng() * 30, sat: 28 + rng() * 22, lig: 42 + rng() * 16,
+                    });
+                }
+                /* front layer — taller, darker, more animated */
+                for (let x = -5; x <= W + 5; x += 2 + rng() * 4) {
+                    blades.push({
+                        x, h: 24 + rng() * 36, lean: (rng() - .5) * 24,
+                        phase: rng() * 6.28, layer: 1, lw: 1.4,
+                        hue: 92 + rng() * 38, sat: 36 + rng() * 30, lig: 22 + rng() * 22,
+                    });
+                }
+            }
+
+            /* ── Draw one grass blade ── */
+            function drawBlade(b, t) {
+                const gy = groundY(b.x);
+                const sway = Math.sin(t * 1.1 + b.phase) * 8 * (b.layer + 0.5);
+                ctx.beginPath();
+                ctx.moveTo(b.x, gy);
+                ctx.quadraticCurveTo(
+                    b.x + b.lean * 0.5 + sway * 0.4, gy - b.h * 0.55,
+                    b.x + b.lean + sway, gy - b.h
+                );
+                ctx.strokeStyle = `hsla(${b.hue},${b.sat}%,${b.lig}%,${b.layer === 0 ? 0.5 : 0.88})`;
+                ctx.lineWidth = b.lw;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            /* ── Recursive tree branch ── */
+            function drawBranch(rng, x, y, angle, len, width, depth, t, fromRoot) {
+                if (depth <= 0 || len < 5) {
+                    /* leaf cluster */
+                    const r = 4 + width * 2.4;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'hsla(112, 42%, 24%, 0.65)';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x - r * .22, y - r * .22, r * .42, 0, Math.PI * 2);
+                    ctx.fillStyle = 'hsla(112, 42%, 38%, 0.38)';
+                    ctx.fill();
+                    return;
+                }
+
+                /* wind sway accumulates toward tips */
+                const sway = Math.sin(t * 0.65 + fromRoot * 0.55) * fromRoot * 0.007;
+                const a = angle + sway;
+                const ex = x + Math.cos(a) * len;
+                const ey = y - Math.sin(a) * len;
+
+                /* organic bow */
+                const bow = (rng() - 0.5) * width * 2;
+                const cpx = (x + ex) * 0.5 - Math.sin(a) * bow;
+                const cpy = (y + ey) * 0.5 - Math.cos(a) * bow;
+
+                const progress = fromRoot / 9;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.quadraticCurveTo(cpx, cpy, ex, ey);
+                ctx.strokeStyle = `hsl(28, ${38 - progress * 16}%, ${20 + progress * 20}%)`;
+                ctx.lineWidth = Math.max(0.5, width);
+                ctx.lineCap = 'round';
+                ctx.stroke();
+
+                /* two main children */
+                const sp1 = 0.22 + rng() * 0.22, sp2 = 0.20 + rng() * 0.22;
+                const lf1 = 0.62 + rng() * 0.12, lf2 = 0.60 + rng() * 0.12;
+                drawBranch(rng, ex, ey, a - sp1, len * lf1, width * .66, depth - 1, t, fromRoot + 1);
+                drawBranch(rng, ex, ey, a + sp2, len * lf2, width * .66, depth - 1, t, fromRoot + 1);
+
+                /* occasional third branch adds density */
+                if (depth > 4 && rng() > 0.55)
+                    drawBranch(rng, ex, ey, a + (rng() - .5) * .4, len * .46, width * .50, depth - 2, t, fromRoot + 2);
+            }
+
+            function drawTree(rootX, rootY, angle, seed, t) {
+                const rng = makeRng(seed);
+                const trunkLen = Math.min(H * 0.26, W * 0.20);
+                drawBranch(rng, rootX, rootY, angle, trunkLen, 10, 5, t, 0);
+            }
+
+            /* ── Init / resize ── */
+            function init() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+                groundBaseY = H * 0.96;
+                buildGrass();
+            }
+
+            /* ── Render loop ── */
+            function frame(now) {
+                if (!startTime) startTime = now;
+                const t = (now - startTime) / 1000;
+
+                ctx.clearRect(0, 0, W, H);
+
+                drawGround();
+
+                /* back grass */
+                for (const b of blades) if (b.layer === 0) drawBlade(b, t);
+
+                /* trees — in front of back grass, behind front grass */
+                drawTree(W * 0.12, groundY(W * 0.12), Math.PI / 2 - 0.10, 7531, t);
+                drawTree(W * 0.88, groundY(W * 0.88), Math.PI / 2 + 0.10, 1357, t);
+
+                /* front grass */
+                for (const b of blades) if (b.layer === 1) drawBlade(b, t);
+
+                requestAnimationFrame(frame);
+            }
+
+            /* ── Boot ── */
+            init();
+            window.addEventListener('resize', init);
+            requestAnimationFrame(frame);
+
+        })();
+    </script>
+</body>
+
+</html>
