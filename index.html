@@ -53,6 +53,19 @@
             pointer-events: none;
         }
 
+        /* ── Character sprite ── */
+        #char-sprite {
+            position: fixed;
+            bottom: 4vh;       /* aligns feet with the ground line (groundBaseY = H*0.96) */
+            left: 50%;
+            transform: translateX(-50%);
+            height: 22vh;      /* tune this to taste */
+            width: auto;
+            z-index: 2;
+            pointer-events: none;
+            image-rendering: pixelated; /* keep pixel art crisp */
+        }
+
         /* ── Content sits above the canvas ── */
         #content {
             position: fixed;
@@ -169,6 +182,7 @@
 
     <canvas id="bg-canvas"></canvas>
     <canvas id="fg-canvas"></canvas>
+    <img id="char-sprite" src="char_git_bg_rm.gif" alt="">
 
     <div id="content">
         <div id="name-block">
@@ -605,6 +619,7 @@
 
         })();
     </script>
+
 </body>
 
 </html>
