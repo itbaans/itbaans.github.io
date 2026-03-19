@@ -36,7 +36,6 @@
             background: #f0f4f8;
         }
 
-        /* ── Canvas — full viewport flood-fill background ── */
         #bg-canvas {
             position: fixed;
             inset: 0;
@@ -44,8 +43,7 @@
             display: block;
         }
 
-        /* ── Foreground canvas — grass, trees ── */
-        #fg-canvas {
+        #ground-canvas {
             position: fixed;
             inset: 0;
             z-index: 1;
@@ -53,31 +51,36 @@
             pointer-events: none;
         }
 
-        /* ── Character sprite ── */
-        #char-sprite {
-            position: fixed;
-            bottom: 4vh;       /* aligns feet with the ground line (groundBaseY = H*0.96) */
-            left: 50%;
-            transform: translateX(-50%);
-            height: 22vh;      /* tune this to taste */
-            width: auto;
-            z-index: 2;
-            pointer-events: none;
-            image-rendering: pixelated; /* keep pixel art crisp */
-        }
-
-        /* ── Content sits above the canvas ── */
-        #content {
+        #fg-canvas {
             position: fixed;
             inset: 0;
             z-index: 2;
+            display: block;
+            pointer-events: none;
+        }
+
+        #char-sprite {
+            position: fixed;
+            bottom: 4vh;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 22vh;
+            width: auto;
+            z-index: 3;
+            pointer-events: none;
+            image-rendering: pixelated;
+        }
+
+        #content {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
             pointer-events: none;
         }
 
-        /* ── Name block ── */
         #name-block {
             margin-top: 6vh;
             text-align: center;
@@ -91,7 +94,6 @@
             font-size: clamp(2.2rem, 5.5vw, 5rem);
             letter-spacing: 0.12em;
             line-height: 1.1;
-            /* Dark ink gradient so it's readable on any light/pastel background */
             background: linear-gradient(135deg, #0d2b45 0%, #0a4a6e 40%, #1a5276 70%, #145374 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -101,7 +103,6 @@
             filter: drop-shadow(0 2px 12px rgba(10, 60, 100, 0.15));
         }
 
-        /* Shimmer sweep */
         h1.site-name::after {
             content: 'itbaan safwan';
             position: absolute;
@@ -137,7 +138,6 @@
             animation: fadeIn 1s ease 2.4s forwards;
         }
 
-        /* ── Keyframes ── */
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -181,6 +181,7 @@
 <body>
 
     <canvas id="bg-canvas"></canvas>
+    <canvas id="ground-canvas"></canvas>
     <canvas id="fg-canvas"></canvas>
     <img id="char-sprite" src="char_git_bg_rm.gif" alt="">
 
@@ -188,42 +189,30 @@
         <div id="name-block">
             <h1 class="site-name">itbaan safwan</h1>
             <div class="site-divider"></div>
-            <p class="site-subtitle">personal portfolio</p>
+            <!-- <p class="site-subtitle">personal portfolio</p> -->
         </div>
     </div>
 
+    <!-- ── Sky flood-fill ── -->
     <script>
-        /* ─────────────────────────────────────────────────────────────
-         *  Flood-Fill Art via Random Walks
-         *  Ported from Processing sketch by sighack.com
-         *  https://sighack.com/post/flood-fill-art-using-random-walks
-         * ───────────────────────────────────────────────────────────── */
         (() => {
             'use strict';
 
             const canvas = document.getElementById('bg-canvas');
             const ctx = canvas.getContext('2d');
 
-            /* ── Tunables ────────────────────────────────────── */
-            const PERTURBATION = 1;     // Gaussian std-dev for color drift
-            const POISSON_RADIUS = 50;    // Min distance between seed points
-            const POISSON_TRIES = 30;    // Candidates per Poisson step
-            const ITERS_PER_FRAME = 10000; // Pixel flood ops per animation frame
-            /* ─────────────────────────────────────────────────── */
+            const PERTURBATION = 0.4;
+            const POISSON_RADIUS = 50;
+            const POISSON_TRIES = 30;
+            const ITERS_PER_FRAME = 10000;
 
-            /* 8-connected neighbour offsets */
             const NX = [-1, -1, -1, 0, 0, 1, 1, 1];
             const NY = [-1, 0, 1, -1, 1, -1, 0, 1];
 
             let W, H;
-            let imageData;   // full-canvas ImageData
-            let visited;     // Uint8Array – 1 if pixel coloured
-            let pts;         // flat Int32Array pool for pending points
-            let ptsHead;     // ring-buffer isn't needed; use swap-array approach
-            let ptsLen;      // current number of points (pairs)
-            let fillDone;
+            let imageData, visited, pts, ptsLen, fillDone;
+            let skyHSL = [];
 
-            /* ── Gaussian random (Box-Muller) ─────────────────── */
             function gauss() {
                 let u = 0, v = 0;
                 while (u === 0) u = Math.random();
@@ -231,197 +220,123 @@
                 return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
             }
 
-            /* ── HSL → RGB (returns [r,g,b] 0-255) ─────────────── */
             function hslToRgb(h, s, l) {
                 s /= 100; l /= 100;
                 const a = s * Math.min(l, 1 - l);
-                const f = n => {
-                    const k = (n + h / 30) % 12;
-                    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-                };
+                const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
                 return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
             }
 
-            /* ── Per-pixel helpers ───────────────────────────── */
-            function getPixelRGB(x, y) {
-                const i = (y * W + x) * 4;
-                return [imageData.data[i], imageData.data[i + 1], imageData.data[i + 2]];
+            function rgbToHsl(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h = 0, s = 0;
+                const l = (max + min) / 2;
+                if (max !== min) {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                    else if (max === g) h = ((b - r) / d + 2) / 6;
+                    else h = ((r - g) / d + 4) / 6;
+                }
+                return [h * 360, s * 100, l * 100];
             }
 
             function setPixelRGB(x, y, r, g, b) {
                 const i = (y * W + x) * 4;
-                imageData.data[i] = r;
-                imageData.data[i + 1] = g;
-                imageData.data[i + 2] = b;
-                imageData.data[i + 3] = 255;
+                imageData.data[i] = r; imageData.data[i + 1] = g;
+                imageData.data[i + 2] = b; imageData.data[i + 3] = 255;
             }
 
-            /* ── Colour mutation (Gaussian drift) ─────────────── */
             function mutate(r, g, b) {
-                const p = PERTURBATION;
-                return [
-                    Math.max(0, Math.min(255, Math.round(r + gauss() * p))),
-                    Math.max(0, Math.min(255, Math.round(g + gauss() * p))),
-                    Math.max(0, Math.min(255, Math.round(b + gauss() * p))),
-                ];
+                const [h, s, l] = rgbToHsl(r, g, b);
+                const nh = Math.max(195, Math.min(255, h + gauss() * 1.5));
+                const ns = Math.max(45, Math.min(72, s + gauss() * 0.3));
+                const nl = Math.max(80, Math.min(94, l + gauss() * PERTURBATION));
+                return hslToRgb(nh, ns, nl);
             }
 
-            /* ── Seed a pixel ────────────────────────────────── */
+            function skyTargetAt(x) {
+                for (let i = 0; i < skyHSL.length - 1; i++) {
+                    const a = skyHSL[i], b = skyHSL[i + 1];
+                    if (x >= a.x && x <= b.x) {
+                        const t = (x - a.x) / (b.x - a.x);
+                        return [a.h + (b.h - a.h) * t, a.s + (b.s - a.s) * t, a.l + (b.l - a.l) * t];
+                    }
+                }
+                return [skyHSL[0].h, skyHSL[0].s, skyHSL[0].l];
+            }
+
             function seedPixel(x, y, r, g, b) {
                 x = Math.round(x); y = Math.round(y);
                 if (x < 0 || x >= W || y < 0 || y >= H) return;
                 if (visited[y * W + x]) return;
                 setPixelRGB(x, y, r, g, b);
                 visited[y * W + x] = 1;
-                // push point pair
-                if (ptsLen * 2 >= pts.length) {
-                    const bigger = new Int32Array(pts.length * 2);
-                    bigger.set(pts);
-                    pts = bigger;
-                }
-                pts[ptsLen * 2] = x;
-                pts[ptsLen * 2 + 1] = y;
-                ptsLen++;
+                if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
+                pts[ptsLen * 2] = x; pts[ptsLen * 2 + 1] = y; ptsLen++;
             }
 
-            /* ── Poisson disk sampling (Bridson) ─────────────── */
-            function poissonDisk(radius, k) {
-                const cell = radius / Math.SQRT2;
-                const gcols = Math.ceil(W / cell) + 1;
-                const grows = Math.ceil(H / cell) + 1;
-                const grid = new Int32Array(gcols * grows).fill(-1);
-                const result = [];   // flat [x0,y0, x1,y1, ...]
-                const active = [];
-
-                function gIdx(x, y) {
-                    return Math.floor(y / cell) * gcols + Math.floor(x / cell);
-                }
-                function addPt(x, y) {
-                    const pi = result.length >> 1;
-                    result.push(x, y);
-                    active.push(pi);
-                    grid[gIdx(x, y)] = pi;
-                }
-
-                addPt(Math.random() * W, Math.random() * H);
-
-                while (active.length > 0) {
-                    const ai = Math.floor(Math.random() * active.length);
-                    const pi = active[ai];
-                    const px = result[pi * 2], py = result[pi * 2 + 1];
-                    let found = false;
-
-                    for (let t = 0; t < k; t++) {
-                        const angle = Math.random() * 2 * Math.PI;
-                        const r = radius + Math.random() * radius;
-                        const nx = px + r * Math.cos(angle);
-                        const ny = py + r * Math.sin(angle);
-                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-
-                        const col = Math.floor(nx / cell);
-                        const row = Math.floor(ny / cell);
-                        let ok = true;
-
-                        outer:
-                        for (let dc = -2; dc <= 2; dc++) {
-                            for (let dr = -2; dr <= 2; dr++) {
-                                const nc = col + dc, nr = row + dr;
-                                if (nc < 0 || nc >= gcols || nr < 0 || nr >= grows) continue;
-                                const ni = grid[nr * gcols + nc];
-                                if (ni < 0) continue;
-                                const dx = result[ni * 2] - nx, dy = result[ni * 2 + 1] - ny;
-                                if (dx * dx + dy * dy < radius * radius) { ok = false; break outer; }
-                            }
-                        }
-                        if (!ok) continue;
-
-                        addPt(nx, ny);
-                        found = true;
-                        break;
-                    }
-
-                    if (!found) {
-                        active[ai] = active[active.length - 1];
-                        active.pop();
-                    }
-                }
-                return result;
-            }
-
-            /* ── Run N flood-fill iterations ─────────────────── */
             function runIterations(n) {
                 const data = imageData.data;
                 for (let k = 0; k < n; k++) {
                     if (ptsLen === 0) { fillDone = true; return; }
-
-                    /* O(1) swap-remove a random pending point */
                     const ri = Math.floor(Math.random() * ptsLen);
                     const px = pts[ri * 2], py = pts[ri * 2 + 1];
-                    ptsLen--;
-                    pts[ri * 2] = pts[ptsLen * 2];
-                    pts[ri * 2 + 1] = pts[ptsLen * 2 + 1];
-
-                    /* Read source colour from ImageData */
+                    ptsLen--; pts[ri * 2] = pts[ptsLen * 2]; pts[ri * 2 + 1] = pts[ptsLen * 2 + 1];
                     const si = (py * W + px) * 4;
                     const sr = data[si], sg = data[si + 1], sb = data[si + 2];
-
-                    /* Spread to up to 8 neighbours */
                     for (let d = 0; d < 8; d++) {
                         const nx = px + NX[d], ny = py + NY[d];
                         if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
                         const vi = ny * W + nx;
                         if (visited[vi]) continue;
-
                         const [nr, ng, nb] = mutate(sr, sg, sb);
+                        const [mh, ms, ml] = rgbToHsl(nr, ng, nb);
+                        const [th, ts, tl] = skyTargetAt(nx);
+                        const w = 0.06;
+                        const [fr, fg, fb] = hslToRgb(mh + (th - mh) * w, ms + (ts - ms) * w, ml + (tl - ml) * w);
                         const di = vi * 4;
-                        data[di] = nr;
-                        data[di + 1] = ng;
-                        data[di + 2] = nb;
-                        data[di + 3] = 255;
+                        data[di] = fr; data[di + 1] = fg; data[di + 2] = fb; data[di + 3] = 255;
                         visited[vi] = 1;
-
-                        /* grow pts buffer if needed */
-                        if (ptsLen * 2 >= pts.length) {
-                            const bigger = new Int32Array(pts.length * 2);
-                            bigger.set(pts);
-                            pts = bigger;
-                        }
-                        pts[ptsLen * 2] = nx;
-                        pts[ptsLen * 2 + 1] = ny;
-                        ptsLen++;
+                        if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
+                        pts[ptsLen * 2] = nx; pts[ptsLen * 2 + 1] = ny; ptsLen++;
                     }
                 }
             }
 
-            /* ── Initialise everything ───────────────────────── */
             function init() {
                 W = canvas.width = window.innerWidth;
                 H = canvas.height = window.innerHeight;
-
                 imageData = ctx.createImageData(W, H);
-                imageData.data.fill(255); // start white
-
+                imageData.data.fill(255);
                 visited = new Uint8Array(W * H);
                 pts = new Int32Array(Math.max(W * H, 1024) * 2);
-                ptsLen = 0;
-                fillDone = false;
+                ptsLen = 0; fillDone = false;
 
-                /* Single seed at the centre */
-                const hue = Math.random() * 360;
-                const sat = 30 + Math.random() * 45;
-                const lig = 68 + Math.random() * 18;
+                const hue = 205 + Math.random() * 30;
+                const sat = 50 + Math.random() * 20;
+                const lig = 83 + Math.random() * 8;
                 const [r, g, b] = hslToRgb(hue, sat, lig);
                 seedPixel(W / 2, H / 2, r, g, b);
+                const hueL = Math.max(205, Math.min(235, hue - 5));
+                const hueR = Math.max(205, Math.min(235, hue + 5));
+                const [rL, gL, bL] = hslToRgb(hueL, sat, lig);
+                const [rR, gR, bR] = hslToRgb(hueR, sat, lig);
+                seedPixel(W / 6, H / 2, rL, gL, bL);
+                seedPixel(W * 5 / 6, H / 2, rR, gR, bR);
 
-                /* Render the seed pixels immediately */
+                skyHSL = [
+                    { x: 0, h: hueL, s: sat, l: lig },
+                    { x: W / 2, h: hue, s: sat, l: lig },
+                    { x: W, h: hueR, s: sat, l: lig },
+                ];
                 ctx.putImageData(imageData, 0, 0);
             }
 
-            /* ── Animation loop ──────────────────────────────── */
             let lastTs = 0;
             function frame(now) {
                 if (!fillDone) {
-                    /* run more iterations if we have CPU budget */
                     const budget = Math.max(1, Math.round(ITERS_PER_FRAME * Math.min((now - lastTs) / 16.7, 2)));
                     lastTs = now;
                     runIterations(budget);
@@ -430,35 +345,291 @@
                 requestAnimationFrame(frame);
             }
 
-            /* ── Boot ────────────────────────────────────────── */
             init();
             requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
-
-            /* Re-init on resize */
             let resizeTimer;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(init, 200);
-            });
-
+            window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 200); });
         })();
     </script>
 
+    <!-- ── Ground flood-fill ── -->
     <script>
-        /* ─────────────────────────────────────────────────────────
-         *  Foreground — Procedural Grass & Recursive Trees
-         * ───────────────────────────────────────────────────────── */
         (() => {
             'use strict';
+
+            const canvas = document.getElementById('ground-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const PERTURBATION = 0.8;
+            const ITERS_PER_FRAME = 8000;
+            const NX = [-1, -1, -1, 0, 0, 1, 1, 1];
+            const NY = [-1, 0, 1, -1, 1, -1, 0, 1];
+
+            let W, H, groundBaseY;
+            let imageData, visited, pts, ptsLen, fillDone;
+            let groundHSL = [];
+
+            function gauss() {
+                let u = 0, v = 0;
+                while (u === 0) u = Math.random();
+                while (v === 0) v = Math.random();
+                return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+            }
+
+            function hslToRgb(h, s, l) {
+                s /= 100; l /= 100;
+                const a = s * Math.min(l, 1 - l);
+                const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+                return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+            }
+
+            function rgbToHsl(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h = 0, s = 0;
+                const l = (max + min) / 2;
+                if (max !== min) {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                    else if (max === g) h = ((b - r) / d + 2) / 6;
+                    else h = ((r - g) / d + 4) / 6;
+                }
+                return [h * 360, s * 100, l * 100];
+            }
+
+            function groundTargetAt(x) {
+                for (let i = 0; i < groundHSL.length - 1; i++) {
+                    const a = groundHSL[i], b = groundHSL[i + 1];
+                    if (x >= a.x && x <= b.x) {
+                        const t = (x - a.x) / (b.x - a.x);
+                        return [a.h + (b.h - a.h) * t, a.s + (b.s - a.s) * t, a.l + (b.l - a.l) * t];
+                    }
+                }
+                return [groundHSL[0].h, groundHSL[0].s, groundHSL[0].l];
+            }
+
+            function mutate(r, g, b) {
+                const [h, s, l] = rgbToHsl(r, g, b);
+                const nh = Math.max(80, Math.min(140, h + gauss() * 1.5));
+                const ns = Math.max(28, Math.min(62, s + gauss() * 0.5));
+                const nl = Math.max(28, Math.min(52, l + gauss() * PERTURBATION));
+                return hslToRgb(nh, ns, nl);
+            }
+
+            function seedPixel(x, y, r, g, b) {
+                x = Math.round(x); y = Math.round(y);
+                if (x < 0 || x >= W || y < groundBaseY || y >= H) return;
+                if (visited[y * W + x]) return;
+                const i = (y * W + x) * 4;
+                imageData.data[i] = r; imageData.data[i + 1] = g; imageData.data[i + 2] = b; imageData.data[i + 3] = 255;
+                visited[y * W + x] = 1;
+                if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
+                pts[ptsLen * 2] = x; pts[ptsLen * 2 + 1] = y; ptsLen++;
+            }
+
+            function runIterations(n) {
+                const data = imageData.data;
+                for (let k = 0; k < n; k++) {
+                    if (ptsLen === 0) { fillDone = true; return; }
+                    const ri = Math.floor(Math.random() * ptsLen);
+                    const px = pts[ri * 2], py = pts[ri * 2 + 1];
+                    ptsLen--; pts[ri * 2] = pts[ptsLen * 2]; pts[ri * 2 + 1] = pts[ptsLen * 2 + 1];
+                    const si = (py * W + px) * 4;
+                    const sr = data[si], sg = data[si + 1], sb = data[si + 2];
+                    for (let d = 0; d < 8; d++) {
+                        const nx = px + NX[d], ny = py + NY[d];
+                        if (nx < 0 || nx >= W || ny < groundBaseY || ny >= H) continue;
+                        const vi = ny * W + nx;
+                        if (visited[vi]) continue;
+                        const [nr, ng, nb] = mutate(sr, sg, sb);
+                        const [mh, ms, ml] = rgbToHsl(nr, ng, nb);
+                        const [th, ts, tl] = groundTargetAt(nx);
+                        const w = 0.06;
+                        const [fr, fg, fb] = hslToRgb(mh + (th - mh) * w, ms + (ts - ms) * w, ml + (tl - ml) * w);
+                        const di = vi * 4;
+                        data[di] = fr; data[di + 1] = fg; data[di + 2] = fb; data[di + 3] = 255;
+                        visited[vi] = 1;
+                        if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
+                        pts[ptsLen * 2] = nx; pts[ptsLen * 2 + 1] = ny; ptsLen++;
+                    }
+                }
+            }
+
+            function init() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+                groundBaseY = Math.round(H * 0.88);
+                imageData = ctx.createImageData(W, H);
+                visited = new Uint8Array(W * H);
+                pts = new Int32Array(Math.max(W * H, 1024) * 2);
+                ptsLen = 0; fillDone = false;
+
+                const hue = 90 + Math.random() * 30;
+                const sat = 35 + Math.random() * 20;
+                const lig = 34 + Math.random() * 14;  /* lightness 34–48% — brighter ground */
+                const [r, g, b] = hslToRgb(hue, sat, lig);
+                seedPixel(W / 2, H * 0.94, r, g, b);
+                const hueL = Math.max(75, Math.min(145, hue - 12));
+                const hueR = Math.max(75, Math.min(145, hue + 12));
+                const [rL, gL, bL] = hslToRgb(hueL, sat, lig);
+                const [rR, gR, bR] = hslToRgb(hueR, sat, lig);
+                seedPixel(W / 6, H * 0.94, rL, gL, bL);
+                seedPixel(W * 5 / 6, H * 0.94, rR, gR, bR);
+
+                groundHSL = [
+                    { x: 0, h: hueL, s: sat, l: lig },
+                    { x: W / 2, h: hue, s: sat, l: lig },
+                    { x: W, h: hueR, s: sat, l: lig },
+                ];
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            let lastTs = 0;
+            function frame(now) {
+                if (!fillDone) {
+                    const budget = Math.max(1, Math.round(ITERS_PER_FRAME * Math.min((now - lastTs) / 16.7, 2)));
+                    lastTs = now;
+                    runIterations(budget);
+                    ctx.putImageData(imageData, 0, 0);
+                }
+                requestAnimationFrame(frame);
+            }
+
+            init();
+            requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
+            let resizeTimer;
+            window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 200); });
+        })();
+    </script>
+
+    <!-- ── Foreground: wavy ground edge + grass + trees ── -->
+    <script>
+        (() => {
+            'use strict';
+
+            /* ── Light green patches ── */
+            const patches = [];
+
+            function buildPatches() {
+                patches.length = 0;
+                const rng = makeRng(8899);
+                const count = 18 + Math.floor(W / 80);
+                for (let i = 0; i < count; i++) {
+                    const x = rng() * W;
+                    const gx = groundY(x);
+                    const depth = rng() * rng() * (H - gx) * 0.85;  // ← rng() * rng() biases toward 0
+                    const rx = 30 + rng() * 90;
+                    const ry = 6 + rng() * 14;
+                    const hue = 88 + rng() * 30;
+                    const light = 38 + rng() * 22;
+                    const alpha = 0.12 + rng() * 0.18;
+                    patches.push({ x, y: gx + depth, rx, ry, hue, light, alpha });
+                }
+            }
+
+            function drawPatches() {
+                for (const p of patches) {
+                    ctx.beginPath();
+                    ctx.ellipse(p.x, p.y + p.ry * 0.4, p.rx, p.ry, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${p.hue}, 55%, ${p.light}%, ${p.alpha})`;
+                    ctx.fill();
+                }
+            }
 
             const canvas = document.getElementById('fg-canvas');
             const ctx = canvas.getContext('2d');
 
             let W, H, groundBaseY;
-            let blades = [];
             let startTime = null;
 
-            /* ── Seeded xorshift32 RNG — keeps tree shape identical each frame ── */
+            /* Random seeds + presets — fresh combination every page load */
+            const TREE_SEED_L = Math.floor(Math.random() * 999983) + 1;
+            const TREE_SEED_R = Math.floor(Math.random() * 999983) + 1;
+
+            /* ── Tree style presets ─────────────────────────────────────────────
+               Each tree independently picks one of these at random.             */
+            const TREE_PRESETS = [
+                /* 0 — Oak: broad, leafy, classic */
+                {
+                    label: 'oak',
+                    maxDepth: 7, lenDecay: 0.68, lenNoise: 0.22,
+                    branchAngleRad: 32 * Math.PI / 180, angleNoiseRad: 16 * Math.PI / 180,
+                    baseThick: 9, thickDecay: 0.62, gravity: 0,
+                    leafDensity: 0.70, leafStartDepth: 0.30, leafSize: 9, leafSizeNoise: 0.50, leafElongate: 1.2,
+                    trunkCurve: 0.22, trunkSegs: 5,
+                    trunkRgb: hexToRgb('#5a3d1e'),
+                    leafRgb1: hexToRgb('#3a7a38'), leafRgb2: hexToRgb('#6db86d'),
+                    swayStrength: 1.0, swaySpeed: 0.60,
+                },
+                /* 1 — Pine: tall, narrow, needle leaves */
+                {
+                    label: 'pine',
+                    maxDepth: 7, lenDecay: 0.60, lenNoise: 0.10,
+                    branchAngleRad: 50 * Math.PI / 180, angleNoiseRad: 6 * Math.PI / 180,
+                    baseThick: 7, thickDecay: 0.58, gravity: 0.05 * Math.PI,
+                    leafDensity: 0.65, leafStartDepth: 0.20, leafSize: 5, leafSizeNoise: 0.20, leafElongate: 3.2,
+                    trunkCurve: 0.06, trunkSegs: 3,
+                    trunkRgb: hexToRgb('#4a3520'),
+                    leafRgb1: hexToRgb('#1a5c1a'), leafRgb2: hexToRgb('#2e8c2e'),
+                    swayStrength: 0.6, swaySpeed: 0.45,
+                },
+                /* 2 — Willow: drooping, wide, flowing */
+                {
+                    label: 'willow',
+                    maxDepth: 7, lenDecay: 0.72, lenNoise: 0.28,
+                    branchAngleRad: 20 * Math.PI / 180, angleNoiseRad: 20 * Math.PI / 180,
+                    baseThick: 8, thickDecay: 0.60, gravity: 0.15 * Math.PI,
+                    leafDensity: 0.68, leafStartDepth: 0.25, leafSize: 6, leafSizeNoise: 0.55, leafElongate: 3.5,
+                    trunkCurve: 0.30, trunkSegs: 6,
+                    trunkRgb: hexToRgb('#7a6040'),
+                    leafRgb1: hexToRgb('#5a8c2a'), leafRgb2: hexToRgb('#8ac84a'),
+                    swayStrength: 1.6, swaySpeed: 0.80,
+                },
+                /* 3 — Bonsai: twisted, compact, deliberate */
+                {
+                    label: 'bonsai',
+                    maxDepth: 6, lenDecay: 0.65, lenNoise: 0.36,
+                    branchAngleRad: 40 * Math.PI / 180, angleNoiseRad: 24 * Math.PI / 180,
+                    baseThick: 11, thickDecay: 0.56, gravity: 0,
+                    leafDensity: 0.65, leafStartDepth: 0.30, leafSize: 8, leafSizeNoise: 0.45, leafElongate: 1.0,
+                    trunkCurve: 0.50, trunkSegs: 7,
+                    trunkRgb: hexToRgb('#7a5530'),
+                    leafRgb1: hexToRgb('#4a8a4a'), leafRgb2: hexToRgb('#80c060'),
+                    swayStrength: 0.7, swaySpeed: 0.50,
+                },
+                /* 4 — Dead: bare, stark, no leaves */
+                {
+                    label: 'dead',
+                    maxDepth: 7, lenDecay: 0.70, lenNoise: 0.30,
+                    branchAngleRad: 26 * Math.PI / 180, angleNoiseRad: 20 * Math.PI / 180,
+                    baseThick: 7, thickDecay: 0.58, gravity: 0,
+                    leafDensity: 0.0, leafStartDepth: 0.99, leafSize: 3, leafSizeNoise: 0.2, leafElongate: 1.0,
+                    trunkCurve: 0.28, trunkSegs: 5,
+                    trunkRgb: hexToRgb('#888070'),
+                    leafRgb1: hexToRgb('#666655'), leafRgb2: hexToRgb('#888877'),
+                    swayStrength: 1.2, swaySpeed: 0.70,
+                },
+                /* 5 — Cherry: round crown, pink blossoms */
+                {
+                    label: 'cherry',
+                    maxDepth: 7, lenDecay: 0.64, lenNoise: 0.26,
+                    branchAngleRad: 36 * Math.PI / 180, angleNoiseRad: 20 * Math.PI / 180,
+                    baseThick: 8, thickDecay: 0.60, gravity: 0,
+                    leafDensity: 0.72, leafStartDepth: 0.25, leafSize: 8, leafSizeNoise: 0.60, leafElongate: 1.0,
+                    trunkCurve: 0.28, trunkSegs: 5,
+                    trunkRgb: hexToRgb('#6b3a2a'),
+                    leafRgb1: hexToRgb('#d4688a'), leafRgb2: hexToRgb('#f0a8c0'),
+                    swayStrength: 1.3, swaySpeed: 0.70,
+                },
+            ];
+
+            /* One preset shared by both trees — same species, different stochastic shape */
+            const SHARED_PRESET = TREE_PRESETS[Math.floor(Math.random() * TREE_PRESETS.length)];
+            const PRESET_L = SHARED_PRESET;
+            const PRESET_R = SHARED_PRESET;
+
+            /* Seeded xorshift32 RNG */
             function makeRng(seed) {
                 let s = (seed ^ 0xdeadbeef) >>> 0 || 1;
                 return () => {
@@ -467,7 +638,7 @@
                 };
             }
 
-            /* ── Organic wavy ground line ── */
+            /* Organic wavy ground line — shared by edge fill and grass roots */
             function groundY(x) {
                 return groundBaseY
                     + Math.sin(x * 0.009) * 6
@@ -475,119 +646,268 @@
                     + Math.cos(x * 0.005 + 0.7) * 4;
             }
 
-            /* ── Ground fill ── */
-            function drawGround() {
+            /* ── Wavy ground edge ── covers the flat boundary from ground-canvas ── */
+            function drawGroundEdge() {
+                /* Only paint a thin feathered strip right at the boundary
+                so the perturbed ground-canvas colors show through below */
+                const stripHeight = 40;
+                ctx.save();
+
+                /* Clip to a band just around the wavy line */
                 ctx.beginPath();
-                ctx.moveTo(-1, H + 1);
-                ctx.lineTo(W + 1, H + 1);
-                for (let x = W; x >= 0; x -= 3) ctx.lineTo(x, groundY(x));
+                for (let x = 0; x <= W; x += 3) ctx.lineTo(x, groundY(x) - stripHeight);
+                for (let x = W; x >= 0; x -= 3) ctx.lineTo(x, groundY(x) + 2);
                 ctx.closePath();
-                const g = ctx.createLinearGradient(0, groundBaseY - 12, 0, H);
-                g.addColorStop(0, 'hsl(112, 40%, 26%)');
-                g.addColorStop(0.3, 'hsl(115, 38%, 18%)');
-                g.addColorStop(1, 'hsl(118, 33%, 10%)');
+                ctx.clip();
+
+                /* Draw the wavy fill — only visible inside the clip strip */
+                ctx.beginPath();
+                ctx.moveTo(0, groundY(0));
+                for (let x = 0; x <= W; x += 3) ctx.lineTo(x, groundY(x));
+                ctx.lineTo(W, H);
+                ctx.lineTo(0, H);
+                ctx.closePath();
+
+                const g = ctx.createLinearGradient(0, groundBaseY - stripHeight, 0, groundBaseY + 10);
+                g.addColorStop(0, 'hsla(100, 40%, 46%, 0)');   /* fully transparent at top */
+                g.addColorStop(0.6, 'hsla(100, 38%, 42%, 0.5)');
+                g.addColorStop(1, 'hsla( 95, 36%, 36%, 0.85)');
                 ctx.fillStyle = g;
                 ctx.fill();
+
+                ctx.restore();
             }
 
-            /* ── Build grass blade data (once per resize) ── */
+            /* ── Grass blade pool ── */
+            const grassBlades = [];
+
             function buildGrass() {
-                blades = [];
-                const rng = makeRng(55555);
-
-                /* back layer — shorter, lighter, subtle */
-                for (let x = 0; x <= W; x += 3 + rng() * 4) {
-                    blades.push({
-                        x, h: 12 + rng() * 18, lean: (rng() - .5) * 16,
-                        phase: rng() * 6.28, layer: 0, lw: 0.8,
-                        hue: 100 + rng() * 30, sat: 28 + rng() * 22, lig: 42 + rng() * 16,
-                    });
+                grassBlades.length = 0;
+                const rng = makeRng(4242);
+                const count = Math.floor(W / 4.5);
+                for (let i = 0; i < count; i++) {
+                    const x = rng() * W;
+                    const len = 8 + rng() * 20;
+                    const lean = (rng() - 0.5) * 0.55;
+                    const sway = 0.10 + rng() * 0.22;
+                    const phase = rng() * Math.PI * 2;
+                    const speed = 0.45 + rng() * 0.85;
+                    const width = 0.6 + rng() * 1.2;
+                    const layer = rng();
+                    const hue = 82 + rng() * 45;
+                    const light = 20 + rng() * 20;
+                    grassBlades.push({ x, len, lean, sway, phase, speed, width, layer, hue, light });
                 }
-                /* front layer — taller, darker, more animated */
-                for (let x = -5; x <= W + 5; x += 2 + rng() * 4) {
-                    blades.push({
-                        x, h: 24 + rng() * 36, lean: (rng() - .5) * 24,
-                        phase: rng() * 6.28, layer: 1, lw: 1.4,
-                        hue: 92 + rng() * 38, sat: 36 + rng() * 30, lig: 22 + rng() * 22,
-                    });
+                grassBlades.sort((a, b) => a.layer - b.layer);
+            }
+
+            function drawGrassSet(blades, t) {
+                for (const b of blades) {
+                    const gy = groundY(b.x);
+                    const angle = b.lean + Math.sin(t * b.speed + b.phase) * b.sway;
+                    const tipX = b.x + Math.sin(angle) * b.len;
+                    const tipY = gy - Math.cos(angle) * b.len;
+                    const cpX = b.x + Math.sin(angle) * b.len * 0.52;
+                    const cpY = gy - Math.cos(angle) * b.len * 0.52;
+                    ctx.beginPath();
+                    ctx.moveTo(b.x, gy);
+                    ctx.quadraticCurveTo(cpX, cpY, tipX, tipY);
+                    ctx.strokeStyle = `hsla(${b.hue}, 42%, ${b.light}%, ${0.45 + b.layer * 0.4})`;
+                    ctx.lineWidth = b.width;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
                 }
             }
 
-            /* ── Draw one grass blade ── */
-            function drawBlade(b, t) {
-                const gy = groundY(b.x);
-                const sway = Math.sin(t * 1.1 + b.phase) * 8 * (b.layer + 0.5);
+            /* ══════════════════════════════════════════════
+               Stochastic Tree System (from tee.html)
+               ══════════════════════════════════════════════ */
+
+            /* Seeded RNG — mulberry32 */
+            function makeTreeRng(seed) {
+                let s = seed >>> 0;
+                return function () {
+                    s |= 0; s = s + 0x6D2B79F5 | 0;
+                    let t = Math.imul(s ^ s >>> 15, 1 | s);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+
+            function hexToRgb(hex) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return [r, g, b];
+            }
+
+            function lerpColor(c1, c2, t) {
+                return c1.map((v, i) => Math.round(v + (c2[i] - v) * t));
+            }
+
+            /* Draw curved trunk — returns tip {x, y, angle} */
+            function drawCurvedTrunk(rng, startX, startY, startAngle, totalLen, thickness, cfg) {
+                const segs = cfg.trunkSegs;
+                const segLen = totalLen / segs;
+                let x = startX, y = startY, angle = startAngle;
+                const pts = [{ x, y }];
+                for (let i = 0; i < segs; i++) {
+                    angle += (rng() - 0.5) * 2 * cfg.trunkCurve;
+                    x += Math.cos(angle) * segLen;
+                    y += Math.sin(angle) * segLen;
+                    pts.push({ x, y });
+                }
+                const [r, g, b] = cfg.trunkRgb;
                 ctx.beginPath();
-                ctx.moveTo(b.x, gy);
-                ctx.quadraticCurveTo(
-                    b.x + b.lean * 0.5 + sway * 0.4, gy - b.h * 0.55,
-                    b.x + b.lean + sway, gy - b.h
-                );
-                ctx.strokeStyle = `hsla(${b.hue},${b.sat}%,${b.lig}%,${b.layer === 0 ? 0.5 : 0.88})`;
-                ctx.lineWidth = b.lw;
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (let i = 1; i < pts.length - 1; i++) {
+                    const mx = (pts[i].x + pts[i + 1].x) / 2;
+                    const my = (pts[i].y + pts[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+                }
+                const last = pts[pts.length - 1];
+                const prev = pts[pts.length - 2];
+                ctx.quadraticCurveTo(prev.x, prev.y, last.x, last.y);
+                ctx.strokeStyle = `rgba(${r},${g},${b},0.92)`;
+                ctx.lineWidth = Math.max(1, thickness);
+                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                ctx.stroke();
+                return { x: last.x, y: last.y, angle };
+            }
+
+            function drawSegment(x1, y1, x2, y2, w1, depth, maxDepth, trunkRgb) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                const depthRatio = depth / maxDepth;
+                const [r, g, b] = trunkRgb;
+                const alpha = 0.7 + depthRatio * 0.28;
+                ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+                ctx.lineWidth = Math.max(0.5, w1);
                 ctx.lineCap = 'round';
                 ctx.stroke();
             }
 
-            /* ── Recursive tree branch ── */
-            function drawBranch(rng, x, y, angle, len, width, depth, t, fromRoot) {
-                if (depth <= 0 || len < 5) {
-                    /* leaf cluster */
-                    const r = 4 + width * 2.4;
-                    ctx.beginPath();
-                    ctx.arc(x, y, r, 0, Math.PI * 2);
-                    ctx.fillStyle = 'hsla(112, 42%, 24%, 0.65)';
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(x - r * .22, y - r * .22, r * .42, 0, Math.PI * 2);
-                    ctx.fillStyle = 'hsla(112, 42%, 38%, 0.38)';
-                    ctx.fill();
-                    return;
+            function drawLeaf(x, y, angle, size, elongate, leafRgb1, leafRgb2, rng) {
+                const tt = rng();
+                const [r, g, b] = lerpColor(leafRgb1, leafRgb2, tt);
+                const alpha = 0.5 + rng() * 0.45;
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle + (rng() - 0.5) * 1.2);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size * 0.5, size * elongate * 0.5, 0, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            /* Animated branch — sway is injected via swayOffset per branch */
+            function drawStochBranch(rng, x, y, angle, length, depth, thickness, cfg, animT, branchDepthFromRoot) {
+                if (depth > cfg.maxDepth || length < 2) return;
+
+                /* Animation: sway increases toward tips, uses tree-global time + branch-specific phase */
+                const swayAmp = branchDepthFromRoot * 0.008 * cfg.swayStrength;
+                const swayAngle = Math.sin(animT * cfg.swaySpeed + branchDepthFromRoot * 0.55 + cfg.swayPhase) * swayAmp;
+                const a = angle + swayAngle;
+
+                const endX = x + Math.cos(a) * length;
+                const endY = y + Math.sin(a) * length;
+                const nextThick = thickness * cfg.thickDecay;
+
+                drawSegment(x, y, endX, endY, thickness, depth, cfg.maxDepth, cfg.trunkRgb);
+
+                /* Leaves along segment */
+                const depthRatio = depth / cfg.maxDepth;
+                if (depthRatio >= cfg.leafStartDepth) {
+                    /* Finer spacing: one leaf check every ~10px along the branch */
+                    const leafCount = Math.max(2, Math.floor(length / 10));
+                    const leafFade = (depthRatio - cfg.leafStartDepth) / (1 - cfg.leafStartDepth + 0.001);
+                    for (let i = 0; i < leafCount; i++) {
+                        if (rng() < cfg.leafDensity * leafFade) {
+                            const tl = rng();
+                            const lx = x + (endX - x) * tl;
+                            const ly = y + (endY - y) * tl;
+                            const langle = a + (rng() - 0.5) * Math.PI;
+                            const lsize = cfg.leafSize * (1 + (rng() - 0.5) * 2 * cfg.leafSizeNoise);
+                            drawLeaf(lx, ly, langle, lsize, cfg.leafElongate, cfg.leafRgb1, cfg.leafRgb2, rng);
+                        }
+                    }
                 }
 
-                /* wind sway accumulates toward tips */
-                const sway = Math.sin(t * 0.65 + fromRoot * 0.55) * fromRoot * 0.007;
-                const a = angle + sway;
-                const ex = x + Math.cos(a) * len;
-                const ey = y - Math.sin(a) * len;
+                /* Branching — guaranteed 2 children until max depth */
+                /* Only prune at the very last level to naturalise tips */
 
-                /* organic bow */
-                const bow = (rng() - 0.5) * width * 2;
-                const cpx = (x + ex) * 0.5 - Math.sin(a) * bow;
-                const cpy = (y + ey) * 0.5 - Math.cos(a) * bow;
-
-                const progress = fromRoot / 9;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.quadraticCurveTo(cpx, cpy, ex, ey);
-                ctx.strokeStyle = `hsl(28, ${38 - progress * 16}%, ${20 + progress * 20}%)`;
-                ctx.lineWidth = Math.max(0.5, width);
-                ctx.lineCap = 'round';
-                ctx.stroke();
-
-                /* two main children */
-                const sp1 = 0.22 + rng() * 0.22, sp2 = 0.20 + rng() * 0.22;
-                const lf1 = 0.62 + rng() * 0.12, lf2 = 0.60 + rng() * 0.12;
-                drawBranch(rng, ex, ey, a - sp1, len * lf1, width * .66, depth - 1, t, fromRoot + 1);
-                drawBranch(rng, ex, ey, a + sp2, len * lf2, width * .66, depth - 1, t, fromRoot + 1);
-
-                /* occasional third branch adds density */
-                if (depth > 4 && rng() > 0.55)
-                    drawBranch(rng, ex, ey, a + (rng() - .5) * .4, len * .46, width * .50, depth - 2, t, fromRoot + 2);
+                /* Always spawn 2 branches (left + right split); add optional 3rd for bushy mid-tree */
+                const spreadAngles = [
+                    -(cfg.branchAngleRad + (rng() - 0.5) * cfg.angleNoiseRad),
+                     (cfg.branchAngleRad + (rng() - 0.5) * cfg.angleNoiseRad),
+                ];
+                /* Occasionally a 3rd branch for extra fullness in mid canopy (18% — kept modest) */
+                if (depthRatio > 0.3 && depthRatio < 0.70 && rng() < 0.18) {
+                    spreadAngles.push((rng() - 0.5) * cfg.branchAngleRad * 0.6);
+                }
+                for (const da of spreadAngles) {
+                    const lenVariance = 1 + (rng() - 0.5) * 2 * cfg.lenNoise;
+                    const newLen = length * cfg.lenDecay * lenVariance;
+                    /* gravity bends every new branch in the configured direction */
+                    const gravityBend = cfg.gravity * cfg.gravitySign;
+                    drawStochBranch(rng, endX, endY, a + da + gravityBend, newLen, depth + 1, nextThick, cfg, animT, branchDepthFromRoot + 1);
+                }
             }
 
-            function drawTree(rootX, rootY, angle, seed, t) {
-                const rng = makeRng(seed);
-                const trunkLen = Math.min(H * 0.26, W * 0.20);
-                drawBranch(rng, rootX, rootY, angle, trunkLen, 10, 5, t, 0);
+            /* Draw a full stochastic tree at (rootX, rootY).
+               lean: small angle offset from straight-up (-PI/2), e.g. -0.10 leans left.
+               cfgOverride: optional per-tree parameter overrides. */
+            function drawTree(rootX, rootY, lean, seed, animT, cfgOverride) {
+                /* Base config — oak-ish defaults, warm earthy tones */
+                const cfg = Object.assign({
+                    maxDepth: 8,                          // 8 levels — full but not excessive
+                    trunkLen: Math.min(H * 0.20, W * 0.14),
+                    lenDecay: 0.68,
+                    lenNoise: 0.22,
+                    branchAngleRad: 30 * Math.PI / 180,
+                    angleNoiseRad: 16 * Math.PI / 180,
+                    gravity: 0,
+                    baseThick: 9,
+                    thickDecay: 0.62,
+                    /* Leaf density — rich canopy */
+                    leafDensity: 0.92,
+                    leafStartDepth: 0.22,               // leaves start early
+                    leafSize: 9,
+                    leafSizeNoise: 0.55,
+                    leafElongate: 1.3,
+                    trunkRgb: hexToRgb('#5a3d1e'),
+                    leafRgb1: hexToRgb('#3d7a3d'),
+                    leafRgb2: hexToRgb('#6db86d'),
+                    trunkCurve: 0.24,
+                    trunkSegs: 5,
+                    /* animation */
+                    swayStrength: 1.0,
+                    swaySpeed: 0.60,
+                    swayPhase: seed * 0.0001,
+                }, cfgOverride);
+
+                const rng = makeTreeRng(seed);
+                const startAngle = -Math.PI / 2 + lean; // upward + lean
+
+                /* Draw curved trunk */
+                const tip = drawCurvedTrunk(rng, rootX, rootY, startAngle,
+                    cfg.trunkLen, cfg.baseThick, cfg);
+
+                /* Branch from tip */
+                drawStochBranch(rng, tip.x, tip.y, tip.angle,
+                    cfg.trunkLen * cfg.lenDecay, 1, cfg.baseThick * cfg.thickDecay,
+                    cfg, animT, 1);
             }
 
-            /* ── Init / resize ── */
+            /* ── Init ── */
             function init() {
                 W = canvas.width = window.innerWidth;
                 H = canvas.height = window.innerHeight;
-                groundBaseY = H * 0.96;
+                groundBaseY = H * 0.88;
                 buildGrass();
+                buildPatches();   // ← add this
             }
 
             /* ── Render loop ── */
@@ -597,26 +917,29 @@
 
                 ctx.clearRect(0, 0, W, H);
 
-                drawGround();
+                /* 1. Wavy ground shape */
+                drawGroundEdge();
+                drawPatches();
+                /* 2. Back-layer grass (behind trees) */
+                drawGrassSet(grassBlades.filter(b => b.layer < 0.5), t);
 
-                /* back grass */
-                for (const b of blades) if (b.layer === 0) drawBlade(b, t);
+                /* 3. Trees — random preset + seed each load */
+                drawTree(W * 0.12, groundY(W * 0.12), 0.12, TREE_SEED_L, t, {
+                    ...PRESET_L, swayPhase: 0.0, gravitySign: +1   // left tree: gravity curves rightward (inward)
+                });
+                drawTree(W * 0.88, groundY(W * 0.88), -0.12, TREE_SEED_R, t, {
+                    ...PRESET_R, swayPhase: 1.4, gravitySign: -1   // right tree: gravity curves leftward (inward)
+                });
 
-                /* trees — in front of back grass, behind front grass */
-                drawTree(W * 0.12, groundY(W * 0.12), Math.PI / 2 - 0.10, 7531, t);
-                drawTree(W * 0.88, groundY(W * 0.88), Math.PI / 2 + 0.10, 1357, t);
-
-                /* front grass */
-                for (const b of blades) if (b.layer === 1) drawBlade(b, t);
+                /* 4. Front-layer grass (in front of trees) */
+                drawGrassSet(grassBlades.filter(b => b.layer >= 0.5), t);
 
                 requestAnimationFrame(frame);
             }
 
-            /* ── Boot ── */
             init();
             window.addEventListener('resize', init);
             requestAnimationFrame(frame);
-
         })();
     </script>
 
