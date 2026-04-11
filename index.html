@@ -2,177 +2,148 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>itbaan safwan</title>
-    <meta name="description" content="Personal profile of Itbaan Safwan." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@300;400&display=swap"
-        rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itbaan Safwan - Academic Portfolio</title>
     <style>
-        @font-face {
-            font-family: 'Portfolio';
-            src: url('portfolio.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
+        /* Academic, minimalist styling */
+        body {
+            font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #FAFAFA;
         }
-    </style>
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
+
+        /* Navigation Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .site-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #111;
+            text-decoration: none;
+        }
+
+        nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: #0056b3;
+            font-size: 1.1em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        /* Home Section & Profile Layout */
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .profile-pic {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #e0e0e0;
+            /* Placeholder color */
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .bio h1 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #111;
+        }
+
+        .bio h3 {
+            margin-top: 0;
+            color: #555;
+            font-weight: normal;
+            font-style: italic;
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 10px;
+            color: #222;
+            margin-bottom: 20px;
+        }
+
+        ul.item-list {
+            list-style-type: none;
             padding: 0;
         }
 
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #f0f4f8;
+        ul.item-list li {
+            margin-bottom: 20px;
         }
 
-        #bg-canvas {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            display: block;
+        .item-title {
+            font-weight: bold;
+            font-size: 1.1em;
         }
 
-        #ground-canvas {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            display: block;
-            pointer-events: none;
+        .item-date {
+            color: #666;
+            font-size: 0.9em;
+            float: right;
         }
 
-        #fg-canvas {
-            position: fixed;
-            inset: 0;
-            z-index: 2;
-            display: block;
-            pointer-events: none;
-        }
-
-        #char-sprite {
-            position: fixed;
-            bottom: 4vh;
-            left: 50%;
-            transform: translateX(-50%);
-            height: 22vh;
-            width: auto;
-            z-index: 3;
-            pointer-events: none;
-            image-rendering: pixelated;
-        }
-
-        #content {
-            position: fixed;
-            inset: 0;
-            z-index: 3;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        #name-block {
-            margin-top: 6vh;
+        /* Footer Links */
+        footer {
+            border-top: 2px solid #eaeaea;
+            padding-top: 30px;
             text-align: center;
-            opacity: 0;
-            animation: fadeInDown 1.6s cubic-bezier(.22, .68, 0, 1.2) 0.6s forwards;
+            margin-top: 60px;
         }
 
-        h1.site-name {
-            font-family: 'Portfolio', 'Cinzel Decorative', serif;
-            font-weight: 700;
-            font-size: clamp(2.2rem, 5.5vw, 5rem);
-            letter-spacing: 0.12em;
-            line-height: 1.1;
-            background: linear-gradient(135deg, #0d2b45 0%, #0a4a6e 40%, #1a5276 70%, #145374 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: none;
-            position: relative;
-            filter: drop-shadow(0 2px 12px rgba(10, 60, 100, 0.15));
+        .footer-links a {
+            margin: 0 15px;
+            color: #333;
+            text-decoration: none;
+            font-weight: bold;
         }
 
-        h1.site-name::after {
-            content: 'itbaan safwan';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(105deg,
-                    transparent 30%,
-                    rgba(255, 255, 255, 0.5) 50%,
-                    transparent 70%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            background-size: 200% 100%;
-            animation: shimmer 4s ease-in-out 2.4s infinite;
+        .footer-links a:hover {
+            color: #0056b3;
+            text-decoration: underline;
         }
 
-        .site-divider {
-            margin: 12px auto 0;
-            width: 0%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(10, 74, 110, 0.5), transparent);
-            animation: expandLine 1.2s ease 2s forwards;
-        }
-
-        .site-subtitle {
-            margin-top: 10px;
-            font-family: 'Portfolio', 'Cinzel', serif;
-            font-weight: 300;
-            font-size: clamp(1.6rem, 3.5vw, 2.8rem);
-            letter-spacing: 0.35em;
-            color: rgba(10, 60, 100, 0.65);
-            text-transform: lowercase;
-            opacity: 0;
-            animation: fadeIn 1s ease 2.4s forwards;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-28px);
+        /* Responsive design for mobile */
+        @media (max-width: 600px) {
+            .profile-container {
+                flex-direction: column;
+                text-align: center;
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
             }
 
-            100% {
-                background-position: 200% 0;
-            }
-        }
-
-        @keyframes expandLine {
-            from {
-                width: 0%;
-            }
-
-            to {
-                width: 50%;
+            nav a {
+                margin: 0 10px;
             }
         }
     </style>
@@ -180,768 +151,120 @@
 
 <body>
 
-    <canvas id="bg-canvas"></canvas>
-    <canvas id="ground-canvas"></canvas>
-    <canvas id="fg-canvas"></canvas>
-    <img id="char-sprite" src="char_git_bg_rm.gif" alt="">
+    <header>
+        <a href="#" class="site-title">Itbaan Safwan</a>
+        <nav>
+            <a href="#about">About</a>
+            <a href="#projects">Projects</a>
+            <a href="#blogs">Blogs</a>
+            <a href="#other">Other</a>
+        </nav>
+    </header>
 
-    <div id="content">
-        <div id="name-block">
-            <h1 class="site-name">itbaan safwan</h1>
-            <div class="site-divider"></div>
-            <!-- <p class="site-subtitle">personal portfolio</p> -->
+    <main>
+        <section id="about" class="profile-container">
+            <img src="profPic.jpg" alt="Portrait of Itbaan Safwan" class="profile-pic">
+
+            <div class="bio">
+                <h1>Hi, I'm Itbaan Safwan</h1>
+                <h3>Final Year B.S. Computer Science Student at IBA Karachi</h3>
+                <p>
+                    Welcome to my personal webpage. I am currently a senior undergraduate student at the
+                    <strong>Institute of Business Administration (IBA) Karachi</strong>.
+                    My academic and research interests are primarily focused on <strong>Multimodal AI</strong> and
+                    <strong>Explainable AI (xAI)</strong>.
+                </p>
+                <p>
+                    Feel free to explore my recent projects or reach out via email.
+                </p>
+            </div>
+        </section>
+
+        <section id="projects">
+            <h2>Selected Projects</h2>
+            <ul class="item-list">
+                <li>
+                    <div class="item-title">MediaEval 2025 (Distinction Award, 2nd Place)</div>
+                    <p>I worked on VLM explainability for gastrointestinal imaging. Using a multitask training approach
+                        on Florence-2 (0.2B), our model generated reasoned VQA answers alongside grounded masks,
+                        successfully outperforming a 3B parameter model. <a href="https://arxiv.org/pdf/2511.04384"
+                            target="_blank">[Paper]</a></p>
+                </li>
+                <li>
+                    <div class="item-title">ArabicNLP 2025 @ EMNLP 2025 Workshop (3rd Place)</div>
+                    <p>I tackled multimodal Arabic hateful meme detection. I conducted an ablation study on three
+                        modality-fusion methods (attention-based, contrastive learning, and 1D convolution), achieving
+                        top-3 performance using the 1D convolution approach. <a
+                            href="https://aclanthology.org/2025.arabicnlp-sharedtasks.98.pdf"
+                            target="_blank">[Paper]</a></p>
+                </li>
+
+                <li>
+                    <div class="item-title">Sketch-RNN Implementation (PyTorch)</div>
+                    <p>Reproduced Google’s Sketch-RNN architecture from scratch using PyTorch, including custom
+                        implementation of loss functions. Trained the model on a cat sketch dataset for 90 epochs,
+                        enabling it to generate coherent and diverse cat drawings. <a
+                            href="https://github.com/itbaans/sketch-rnn-pytorch" target="_blank">[GitHub]</a></p>
+                </li>
+            </ul>
+        </section>
+
+        <section id="blogs">
+            <h2>Recent Blogs & Articles</h2>
+            <ul class="item-list">
+                <li>
+                    <div class="item-title"><a
+                            href="https://medium.com/@itbaansafwan/exploring-vlms-attention-heads-a1d46c3abfdf"
+                            target="_blank">Qwen2-VL Attention Analysis</a> <span class="item-date">March 2026</span>
+                    </div>
+                    <p>Inspired by a recent CVPR paper on VLM attention heads, I conducted an independent experiment on
+                        Qwen2-VL (2B). By mapping object names to attention heatmaps, I empirically confirmed that
+                        specific heads in Layer 9 act as semantic segmenters, strongly capturing the relationship
+                        between text and visual regions.</p>
+                </li>
+                <li>
+                    <div class="item-title"><a href="harmonizers.html">Harmonizers: A Theory</a> <span
+                            class="item-date">December 2024</span></div>
+                    <p>Discussing the process through which the brain achieves an "optimal balance" of multidimensional
+                        knowledge, and the inevitable role of personal biases.</p>
+                </li>
+                <li>
+                    <div class="item-title"><a href="llm_and_reasoning.html">LLM and Reasoning</a> <span
+                            class="item-date">January 2025</span></div>
+                    <p>Exploring the philosophical distinction between "true" human reasoning and the linguistic-bound
+                        knowledge representation of Large Language Models.</p>
+                </li>
+                <li>
+                    <div class="item-title"><a
+                            href="https://medium.com/@itbaansafwan/a-birds-eye-view-of-transformers-f87a4e96423c"
+                            target="_blank">A Bird’s eye view of Transformers</a> <span class="item-date">February
+                            2025</span></div>
+                    <p>An intuitive breakdown of Transformer architecture that explores tokenization, embeddings,
+                        attention mechanisms, and MLPs. This piece is based on concepts from 3Blue1Brown and
+                        Serrano.Academy, and concludes with thoughts on AGI.</p>
+                </li>
+            </ul>
+        </section>
+
+        <section id="other">
+            <h2>Other Stuff</h2>
+            <ul>
+                <li><strong><a href="digital_paints.html">Digital Paint Gallery</a>:</strong> These are some digital
+                    paints that I made during my gap years and when my mind wandered.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="mailto:kodvavi100@outlook.com">Email</a>
+            <a href="https://github.com/itbaans" target="_blank">GitHub</a>
+            <a href="https://www.linkedin.com/in/itbaan-safwan-845213254" target="_blank">LinkedIn</a>
         </div>
-    </div>
-
-    <!-- ── Sky flood-fill ── -->
-    <script>
-        (() => {
-            'use strict';
-
-            const canvas = document.getElementById('bg-canvas');
-            const ctx = canvas.getContext('2d');
-
-            const PERTURBATION = 0.4;
-            const POISSON_RADIUS = 50;
-            const POISSON_TRIES = 30;
-            const ITERS_PER_FRAME = 10000;
-
-            const NX = [-1, -1, -1, 0, 0, 1, 1, 1];
-            const NY = [-1, 0, 1, -1, 1, -1, 0, 1];
-
-            let W, H;
-            let imageData, visited, pts, ptsLen, fillDone;
-            let skyHSL = [];
-
-            function gauss() {
-                let u = 0, v = 0;
-                while (u === 0) u = Math.random();
-                while (v === 0) v = Math.random();
-                return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-            }
-
-            function hslToRgb(h, s, l) {
-                s /= 100; l /= 100;
-                const a = s * Math.min(l, 1 - l);
-                const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
-                return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
-            }
-
-            function rgbToHsl(r, g, b) {
-                r /= 255; g /= 255; b /= 255;
-                const max = Math.max(r, g, b), min = Math.min(r, g, b);
-                let h = 0, s = 0;
-                const l = (max + min) / 2;
-                if (max !== min) {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-                    else if (max === g) h = ((b - r) / d + 2) / 6;
-                    else h = ((r - g) / d + 4) / 6;
-                }
-                return [h * 360, s * 100, l * 100];
-            }
-
-            function setPixelRGB(x, y, r, g, b) {
-                const i = (y * W + x) * 4;
-                imageData.data[i] = r; imageData.data[i + 1] = g;
-                imageData.data[i + 2] = b; imageData.data[i + 3] = 255;
-            }
-
-            function mutate(r, g, b) {
-                const [h, s, l] = rgbToHsl(r, g, b);
-                const nh = Math.max(195, Math.min(255, h + gauss() * 1.5));
-                const ns = Math.max(45, Math.min(72, s + gauss() * 0.3));
-                const nl = Math.max(80, Math.min(94, l + gauss() * PERTURBATION));
-                return hslToRgb(nh, ns, nl);
-            }
-
-            function skyTargetAt(x) {
-                for (let i = 0; i < skyHSL.length - 1; i++) {
-                    const a = skyHSL[i], b = skyHSL[i + 1];
-                    if (x >= a.x && x <= b.x) {
-                        const t = (x - a.x) / (b.x - a.x);
-                        return [a.h + (b.h - a.h) * t, a.s + (b.s - a.s) * t, a.l + (b.l - a.l) * t];
-                    }
-                }
-                return [skyHSL[0].h, skyHSL[0].s, skyHSL[0].l];
-            }
-
-            function seedPixel(x, y, r, g, b) {
-                x = Math.round(x); y = Math.round(y);
-                if (x < 0 || x >= W || y < 0 || y >= H) return;
-                if (visited[y * W + x]) return;
-                setPixelRGB(x, y, r, g, b);
-                visited[y * W + x] = 1;
-                if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
-                pts[ptsLen * 2] = x; pts[ptsLen * 2 + 1] = y; ptsLen++;
-            }
-
-            function runIterations(n) {
-                const data = imageData.data;
-                for (let k = 0; k < n; k++) {
-                    if (ptsLen === 0) { fillDone = true; return; }
-                    const ri = Math.floor(Math.random() * ptsLen);
-                    const px = pts[ri * 2], py = pts[ri * 2 + 1];
-                    ptsLen--; pts[ri * 2] = pts[ptsLen * 2]; pts[ri * 2 + 1] = pts[ptsLen * 2 + 1];
-                    const si = (py * W + px) * 4;
-                    const sr = data[si], sg = data[si + 1], sb = data[si + 2];
-                    for (let d = 0; d < 8; d++) {
-                        const nx = px + NX[d], ny = py + NY[d];
-                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-                        const vi = ny * W + nx;
-                        if (visited[vi]) continue;
-                        const [nr, ng, nb] = mutate(sr, sg, sb);
-                        const [mh, ms, ml] = rgbToHsl(nr, ng, nb);
-                        const [th, ts, tl] = skyTargetAt(nx);
-                        const w = 0.06;
-                        const [fr, fg, fb] = hslToRgb(mh + (th - mh) * w, ms + (ts - ms) * w, ml + (tl - ml) * w);
-                        const di = vi * 4;
-                        data[di] = fr; data[di + 1] = fg; data[di + 2] = fb; data[di + 3] = 255;
-                        visited[vi] = 1;
-                        if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
-                        pts[ptsLen * 2] = nx; pts[ptsLen * 2 + 1] = ny; ptsLen++;
-                    }
-                }
-            }
-
-            function init() {
-                W = canvas.width = window.innerWidth;
-                H = canvas.height = window.innerHeight;
-                imageData = ctx.createImageData(W, H);
-                imageData.data.fill(255);
-                visited = new Uint8Array(W * H);
-                pts = new Int32Array(Math.max(W * H, 1024) * 2);
-                ptsLen = 0; fillDone = false;
-
-                const hue = 205 + Math.random() * 30;
-                const sat = 50 + Math.random() * 20;
-                const lig = 83 + Math.random() * 8;
-                const [r, g, b] = hslToRgb(hue, sat, lig);
-                seedPixel(W / 2, H / 2, r, g, b);
-                const hueL = Math.max(205, Math.min(235, hue - 5));
-                const hueR = Math.max(205, Math.min(235, hue + 5));
-                const [rL, gL, bL] = hslToRgb(hueL, sat, lig);
-                const [rR, gR, bR] = hslToRgb(hueR, sat, lig);
-                seedPixel(W / 6, H / 2, rL, gL, bL);
-                seedPixel(W * 5 / 6, H / 2, rR, gR, bR);
-
-                skyHSL = [
-                    { x: 0, h: hueL, s: sat, l: lig },
-                    { x: W / 2, h: hue, s: sat, l: lig },
-                    { x: W, h: hueR, s: sat, l: lig },
-                ];
-                ctx.putImageData(imageData, 0, 0);
-            }
-
-            let lastTs = 0;
-            function frame(now) {
-                if (!fillDone) {
-                    const budget = Math.max(1, Math.round(ITERS_PER_FRAME * Math.min((now - lastTs) / 16.7, 2)));
-                    lastTs = now;
-                    runIterations(budget);
-                    ctx.putImageData(imageData, 0, 0);
-                }
-                requestAnimationFrame(frame);
-            }
-
-            init();
-            requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
-            let resizeTimer;
-            window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 200); });
-        })();
-    </script>
-
-    <!-- ── Ground flood-fill ── -->
-    <script>
-        (() => {
-            'use strict';
-
-            const canvas = document.getElementById('ground-canvas');
-            const ctx = canvas.getContext('2d');
-
-            const PERTURBATION = 0.8;
-            const ITERS_PER_FRAME = 8000;
-            const NX = [-1, -1, -1, 0, 0, 1, 1, 1];
-            const NY = [-1, 0, 1, -1, 1, -1, 0, 1];
-
-            let W, H, groundBaseY;
-            let imageData, visited, pts, ptsLen, fillDone;
-            let groundHSL = [];
-
-            function gauss() {
-                let u = 0, v = 0;
-                while (u === 0) u = Math.random();
-                while (v === 0) v = Math.random();
-                return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-            }
-
-            function hslToRgb(h, s, l) {
-                s /= 100; l /= 100;
-                const a = s * Math.min(l, 1 - l);
-                const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
-                return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
-            }
-
-            function rgbToHsl(r, g, b) {
-                r /= 255; g /= 255; b /= 255;
-                const max = Math.max(r, g, b), min = Math.min(r, g, b);
-                let h = 0, s = 0;
-                const l = (max + min) / 2;
-                if (max !== min) {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-                    else if (max === g) h = ((b - r) / d + 2) / 6;
-                    else h = ((r - g) / d + 4) / 6;
-                }
-                return [h * 360, s * 100, l * 100];
-            }
-
-            function groundTargetAt(x) {
-                for (let i = 0; i < groundHSL.length - 1; i++) {
-                    const a = groundHSL[i], b = groundHSL[i + 1];
-                    if (x >= a.x && x <= b.x) {
-                        const t = (x - a.x) / (b.x - a.x);
-                        return [a.h + (b.h - a.h) * t, a.s + (b.s - a.s) * t, a.l + (b.l - a.l) * t];
-                    }
-                }
-                return [groundHSL[0].h, groundHSL[0].s, groundHSL[0].l];
-            }
-
-            function mutate(r, g, b) {
-                const [h, s, l] = rgbToHsl(r, g, b);
-                const nh = Math.max(80, Math.min(140, h + gauss() * 1.5));
-                const ns = Math.max(28, Math.min(62, s + gauss() * 0.5));
-                const nl = Math.max(28, Math.min(52, l + gauss() * PERTURBATION));
-                return hslToRgb(nh, ns, nl);
-            }
-
-            function seedPixel(x, y, r, g, b) {
-                x = Math.round(x); y = Math.round(y);
-                if (x < 0 || x >= W || y < groundBaseY || y >= H) return;
-                if (visited[y * W + x]) return;
-                const i = (y * W + x) * 4;
-                imageData.data[i] = r; imageData.data[i + 1] = g; imageData.data[i + 2] = b; imageData.data[i + 3] = 255;
-                visited[y * W + x] = 1;
-                if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
-                pts[ptsLen * 2] = x; pts[ptsLen * 2 + 1] = y; ptsLen++;
-            }
-
-            function runIterations(n) {
-                const data = imageData.data;
-                for (let k = 0; k < n; k++) {
-                    if (ptsLen === 0) { fillDone = true; return; }
-                    const ri = Math.floor(Math.random() * ptsLen);
-                    const px = pts[ri * 2], py = pts[ri * 2 + 1];
-                    ptsLen--; pts[ri * 2] = pts[ptsLen * 2]; pts[ri * 2 + 1] = pts[ptsLen * 2 + 1];
-                    const si = (py * W + px) * 4;
-                    const sr = data[si], sg = data[si + 1], sb = data[si + 2];
-                    for (let d = 0; d < 8; d++) {
-                        const nx = px + NX[d], ny = py + NY[d];
-                        if (nx < 0 || nx >= W || ny < groundBaseY || ny >= H) continue;
-                        const vi = ny * W + nx;
-                        if (visited[vi]) continue;
-                        const [nr, ng, nb] = mutate(sr, sg, sb);
-                        const [mh, ms, ml] = rgbToHsl(nr, ng, nb);
-                        const [th, ts, tl] = groundTargetAt(nx);
-                        const w = 0.06;
-                        const [fr, fg, fb] = hslToRgb(mh + (th - mh) * w, ms + (ts - ms) * w, ml + (tl - ml) * w);
-                        const di = vi * 4;
-                        data[di] = fr; data[di + 1] = fg; data[di + 2] = fb; data[di + 3] = 255;
-                        visited[vi] = 1;
-                        if (ptsLen * 2 >= pts.length) { const bigger = new Int32Array(pts.length * 2); bigger.set(pts); pts = bigger; }
-                        pts[ptsLen * 2] = nx; pts[ptsLen * 2 + 1] = ny; ptsLen++;
-                    }
-                }
-            }
-
-            function init() {
-                W = canvas.width = window.innerWidth;
-                H = canvas.height = window.innerHeight;
-                groundBaseY = Math.round(H * 0.88);
-                imageData = ctx.createImageData(W, H);
-                visited = new Uint8Array(W * H);
-                pts = new Int32Array(Math.max(W * H, 1024) * 2);
-                ptsLen = 0; fillDone = false;
-
-                const hue = 90 + Math.random() * 30;
-                const sat = 35 + Math.random() * 20;
-                const lig = 34 + Math.random() * 14;  /* lightness 34–48% — brighter ground */
-                const [r, g, b] = hslToRgb(hue, sat, lig);
-                seedPixel(W / 2, H * 0.94, r, g, b);
-                const hueL = Math.max(75, Math.min(145, hue - 12));
-                const hueR = Math.max(75, Math.min(145, hue + 12));
-                const [rL, gL, bL] = hslToRgb(hueL, sat, lig);
-                const [rR, gR, bR] = hslToRgb(hueR, sat, lig);
-                seedPixel(W / 6, H * 0.94, rL, gL, bL);
-                seedPixel(W * 5 / 6, H * 0.94, rR, gR, bR);
-
-                groundHSL = [
-                    { x: 0, h: hueL, s: sat, l: lig },
-                    { x: W / 2, h: hue, s: sat, l: lig },
-                    { x: W, h: hueR, s: sat, l: lig },
-                ];
-                ctx.putImageData(imageData, 0, 0);
-            }
-
-            let lastTs = 0;
-            function frame(now) {
-                if (!fillDone) {
-                    const budget = Math.max(1, Math.round(ITERS_PER_FRAME * Math.min((now - lastTs) / 16.7, 2)));
-                    lastTs = now;
-                    runIterations(budget);
-                    ctx.putImageData(imageData, 0, 0);
-                }
-                requestAnimationFrame(frame);
-            }
-
-            init();
-            requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
-            let resizeTimer;
-            window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 200); });
-        })();
-    </script>
-
-    <!-- ── Foreground: wavy ground edge + grass + trees ── -->
-    <script>
-        (() => {
-            'use strict';
-
-            /* ── Light green patches ── */
-            const patches = [];
-
-            function buildPatches() {
-                patches.length = 0;
-                const rng = makeRng(8899);
-                const count = 18 + Math.floor(W / 80);
-                for (let i = 0; i < count; i++) {
-                    const x = rng() * W;
-                    const gx = groundY(x);
-                    const depth = rng() * rng() * (H - gx) * 0.85;  // ← rng() * rng() biases toward 0
-                    const rx = 30 + rng() * 90;
-                    const ry = 6 + rng() * 14;
-                    const hue = 88 + rng() * 30;
-                    const light = 38 + rng() * 22;
-                    const alpha = 0.12 + rng() * 0.18;
-                    patches.push({ x, y: gx + depth, rx, ry, hue, light, alpha });
-                }
-            }
-
-            function drawPatches() {
-                for (const p of patches) {
-                    ctx.beginPath();
-                    ctx.ellipse(p.x, p.y + p.ry * 0.4, p.rx, p.ry, 0, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${p.hue}, 55%, ${p.light}%, ${p.alpha})`;
-                    ctx.fill();
-                }
-            }
-
-            const canvas = document.getElementById('fg-canvas');
-            const ctx = canvas.getContext('2d');
-
-            let W, H, groundBaseY;
-            let startTime = null;
-
-            /* Random seeds + presets — fresh combination every page load */
-            const TREE_SEED_L = Math.floor(Math.random() * 999983) + 1;
-            const TREE_SEED_R = Math.floor(Math.random() * 999983) + 1;
-
-            /* ── Tree style presets ─────────────────────────────────────────────
-               Each tree independently picks one of these at random.             */
-            const TREE_PRESETS = [
-                /* 0 — Oak: broad, leafy, classic */
-                {
-                    label: 'oak',
-                    maxDepth: 7, lenDecay: 0.68, lenNoise: 0.22,
-                    branchAngleRad: 32 * Math.PI / 180, angleNoiseRad: 16 * Math.PI / 180,
-                    baseThick: 9, thickDecay: 0.62, gravity: 0,
-                    leafDensity: 0.70, leafStartDepth: 0.30, leafSize: 9, leafSizeNoise: 0.50, leafElongate: 1.2,
-                    trunkCurve: 0.22, trunkSegs: 5,
-                    trunkRgb: hexToRgb('#5a3d1e'),
-                    leafRgb1: hexToRgb('#3a7a38'), leafRgb2: hexToRgb('#6db86d'),
-                    swayStrength: 1.0, swaySpeed: 0.60,
-                },
-                /* 1 — Pine: tall, narrow, needle leaves */
-                {
-                    label: 'pine',
-                    maxDepth: 7, lenDecay: 0.60, lenNoise: 0.10,
-                    branchAngleRad: 50 * Math.PI / 180, angleNoiseRad: 6 * Math.PI / 180,
-                    baseThick: 7, thickDecay: 0.58, gravity: 0.05 * Math.PI,
-                    leafDensity: 0.65, leafStartDepth: 0.20, leafSize: 5, leafSizeNoise: 0.20, leafElongate: 3.2,
-                    trunkCurve: 0.06, trunkSegs: 3,
-                    trunkRgb: hexToRgb('#4a3520'),
-                    leafRgb1: hexToRgb('#1a5c1a'), leafRgb2: hexToRgb('#2e8c2e'),
-                    swayStrength: 0.6, swaySpeed: 0.45,
-                },
-                /* 2 — Willow: drooping, wide, flowing */
-                {
-                    label: 'willow',
-                    maxDepth: 7, lenDecay: 0.72, lenNoise: 0.28,
-                    branchAngleRad: 20 * Math.PI / 180, angleNoiseRad: 20 * Math.PI / 180,
-                    baseThick: 8, thickDecay: 0.60, gravity: 0.15 * Math.PI,
-                    leafDensity: 0.68, leafStartDepth: 0.25, leafSize: 6, leafSizeNoise: 0.55, leafElongate: 3.5,
-                    trunkCurve: 0.30, trunkSegs: 6,
-                    trunkRgb: hexToRgb('#7a6040'),
-                    leafRgb1: hexToRgb('#5a8c2a'), leafRgb2: hexToRgb('#8ac84a'),
-                    swayStrength: 1.6, swaySpeed: 0.80,
-                },
-                /* 3 — Bonsai: twisted, compact, deliberate */
-                {
-                    label: 'bonsai',
-                    maxDepth: 6, lenDecay: 0.65, lenNoise: 0.36,
-                    branchAngleRad: 40 * Math.PI / 180, angleNoiseRad: 24 * Math.PI / 180,
-                    baseThick: 11, thickDecay: 0.56, gravity: 0,
-                    leafDensity: 0.65, leafStartDepth: 0.30, leafSize: 8, leafSizeNoise: 0.45, leafElongate: 1.0,
-                    trunkCurve: 0.50, trunkSegs: 7,
-                    trunkRgb: hexToRgb('#7a5530'),
-                    leafRgb1: hexToRgb('#4a8a4a'), leafRgb2: hexToRgb('#80c060'),
-                    swayStrength: 0.7, swaySpeed: 0.50,
-                },
-                /* 4 — Dead: bare, stark, no leaves */
-                {
-                    label: 'dead',
-                    maxDepth: 7, lenDecay: 0.70, lenNoise: 0.30,
-                    branchAngleRad: 26 * Math.PI / 180, angleNoiseRad: 20 * Math.PI / 180,
-                    baseThick: 7, thickDecay: 0.58, gravity: 0,
-                    leafDensity: 0.0, leafStartDepth: 0.99, leafSize: 3, leafSizeNoise: 0.2, leafElongate: 1.0,
-                    trunkCurve: 0.28, trunkSegs: 5,
-                    trunkRgb: hexToRgb('#888070'),
-                    leafRgb1: hexToRgb('#666655'), leafRgb2: hexToRgb('#888877'),
-                    swayStrength: 1.2, swaySpeed: 0.70,
-                },
-                /* 5 — Cherry: round crown, pink blossoms */
-                {
-                    label: 'cherry',
-                    maxDepth: 7, lenDecay: 0.64, lenNoise: 0.26,
-                    branchAngleRad: 36 * Math.PI / 180, angleNoiseRad: 20 * Math.PI / 180,
-                    baseThick: 8, thickDecay: 0.60, gravity: 0,
-                    leafDensity: 0.72, leafStartDepth: 0.25, leafSize: 8, leafSizeNoise: 0.60, leafElongate: 1.0,
-                    trunkCurve: 0.28, trunkSegs: 5,
-                    trunkRgb: hexToRgb('#6b3a2a'),
-                    leafRgb1: hexToRgb('#d4688a'), leafRgb2: hexToRgb('#f0a8c0'),
-                    swayStrength: 1.3, swaySpeed: 0.70,
-                },
-            ];
-
-            /* One preset shared by both trees — same species, different stochastic shape */
-            const SHARED_PRESET = TREE_PRESETS[Math.floor(Math.random() * TREE_PRESETS.length)];
-            const PRESET_L = SHARED_PRESET;
-            const PRESET_R = SHARED_PRESET;
-
-            /* Seeded xorshift32 RNG */
-            function makeRng(seed) {
-                let s = (seed ^ 0xdeadbeef) >>> 0 || 1;
-                return () => {
-                    s ^= s << 13; s ^= s >> 17; s ^= s << 5;
-                    return (s >>> 0) / 0x100000000;
-                };
-            }
-
-            /* Organic wavy ground line — shared by edge fill and grass roots */
-            function groundY(x) {
-                return groundBaseY
-                    + Math.sin(x * 0.009) * 6
-                    + Math.sin(x * 0.019 + 2.1) * 3
-                    + Math.cos(x * 0.005 + 0.7) * 4;
-            }
-
-            /* ── Wavy ground edge ── covers the flat boundary from ground-canvas ── */
-            function drawGroundEdge() {
-                /* Only paint a thin feathered strip right at the boundary
-                so the perturbed ground-canvas colors show through below */
-                const stripHeight = 40;
-                ctx.save();
-
-                /* Clip to a band just around the wavy line */
-                ctx.beginPath();
-                for (let x = 0; x <= W; x += 3) ctx.lineTo(x, groundY(x) - stripHeight);
-                for (let x = W; x >= 0; x -= 3) ctx.lineTo(x, groundY(x) + 2);
-                ctx.closePath();
-                ctx.clip();
-
-                /* Draw the wavy fill — only visible inside the clip strip */
-                ctx.beginPath();
-                ctx.moveTo(0, groundY(0));
-                for (let x = 0; x <= W; x += 3) ctx.lineTo(x, groundY(x));
-                ctx.lineTo(W, H);
-                ctx.lineTo(0, H);
-                ctx.closePath();
-
-                const g = ctx.createLinearGradient(0, groundBaseY - stripHeight, 0, groundBaseY + 10);
-                g.addColorStop(0, 'hsla(100, 40%, 46%, 0)');   /* fully transparent at top */
-                g.addColorStop(0.6, 'hsla(100, 38%, 42%, 0.5)');
-                g.addColorStop(1, 'hsla( 95, 36%, 36%, 0.85)');
-                ctx.fillStyle = g;
-                ctx.fill();
-
-                ctx.restore();
-            }
-
-            /* ── Grass blade pool ── */
-            const grassBlades = [];
-
-            function buildGrass() {
-                grassBlades.length = 0;
-                const rng = makeRng(4242);
-                const count = Math.floor(W / 4.5);
-                for (let i = 0; i < count; i++) {
-                    const x = rng() * W;
-                    const len = 8 + rng() * 20;
-                    const lean = (rng() - 0.5) * 0.55;
-                    const sway = 0.10 + rng() * 0.22;
-                    const phase = rng() * Math.PI * 2;
-                    const speed = 0.45 + rng() * 0.85;
-                    const width = 0.6 + rng() * 1.2;
-                    const layer = rng();
-                    const hue = 82 + rng() * 45;
-                    const light = 20 + rng() * 20;
-                    grassBlades.push({ x, len, lean, sway, phase, speed, width, layer, hue, light });
-                }
-                grassBlades.sort((a, b) => a.layer - b.layer);
-            }
-
-            function drawGrassSet(blades, t) {
-                for (const b of blades) {
-                    const gy = groundY(b.x);
-                    const angle = b.lean + Math.sin(t * b.speed + b.phase) * b.sway;
-                    const tipX = b.x + Math.sin(angle) * b.len;
-                    const tipY = gy - Math.cos(angle) * b.len;
-                    const cpX = b.x + Math.sin(angle) * b.len * 0.52;
-                    const cpY = gy - Math.cos(angle) * b.len * 0.52;
-                    ctx.beginPath();
-                    ctx.moveTo(b.x, gy);
-                    ctx.quadraticCurveTo(cpX, cpY, tipX, tipY);
-                    ctx.strokeStyle = `hsla(${b.hue}, 42%, ${b.light}%, ${0.45 + b.layer * 0.4})`;
-                    ctx.lineWidth = b.width;
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-                }
-            }
-
-            /* ══════════════════════════════════════════════
-               Stochastic Tree System (from tee.html)
-               ══════════════════════════════════════════════ */
-
-            /* Seeded RNG — mulberry32 */
-            function makeTreeRng(seed) {
-                let s = seed >>> 0;
-                return function () {
-                    s |= 0; s = s + 0x6D2B79F5 | 0;
-                    let t = Math.imul(s ^ s >>> 15, 1 | s);
-                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-                };
-            }
-
-            function hexToRgb(hex) {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                return [r, g, b];
-            }
-
-            function lerpColor(c1, c2, t) {
-                return c1.map((v, i) => Math.round(v + (c2[i] - v) * t));
-            }
-
-            /* Draw curved trunk — returns tip {x, y, angle} */
-            function drawCurvedTrunk(rng, startX, startY, startAngle, totalLen, thickness, cfg) {
-                const segs = cfg.trunkSegs;
-                const segLen = totalLen / segs;
-                let x = startX, y = startY, angle = startAngle;
-                const pts = [{ x, y }];
-                for (let i = 0; i < segs; i++) {
-                    angle += (rng() - 0.5) * 2 * cfg.trunkCurve;
-                    x += Math.cos(angle) * segLen;
-                    y += Math.sin(angle) * segLen;
-                    pts.push({ x, y });
-                }
-                const [r, g, b] = cfg.trunkRgb;
-                ctx.beginPath();
-                ctx.moveTo(pts[0].x, pts[0].y);
-                for (let i = 1; i < pts.length - 1; i++) {
-                    const mx = (pts[i].x + pts[i + 1].x) / 2;
-                    const my = (pts[i].y + pts[i + 1].y) / 2;
-                    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-                }
-                const last = pts[pts.length - 1];
-                const prev = pts[pts.length - 2];
-                ctx.quadraticCurveTo(prev.x, prev.y, last.x, last.y);
-                ctx.strokeStyle = `rgba(${r},${g},${b},0.92)`;
-                ctx.lineWidth = Math.max(1, thickness);
-                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                ctx.stroke();
-                return { x: last.x, y: last.y, angle };
-            }
-
-            function drawSegment(x1, y1, x2, y2, w1, depth, maxDepth, trunkRgb) {
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                const depthRatio = depth / maxDepth;
-                const [r, g, b] = trunkRgb;
-                const alpha = 0.7 + depthRatio * 0.28;
-                ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
-                ctx.lineWidth = Math.max(0.5, w1);
-                ctx.lineCap = 'round';
-                ctx.stroke();
-            }
-
-            function drawLeaf(x, y, angle, size, elongate, leafRgb1, leafRgb2, rng) {
-                const tt = rng();
-                const [r, g, b] = lerpColor(leafRgb1, leafRgb2, tt);
-                const alpha = 0.5 + rng() * 0.45;
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(angle + (rng() - 0.5) * 1.2);
-                ctx.beginPath();
-                ctx.ellipse(0, 0, size * 0.5, size * elongate * 0.5, 0, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-                ctx.fill();
-                ctx.restore();
-            }
-
-            /* Animated branch — sway is injected via swayOffset per branch */
-            function drawStochBranch(rng, x, y, angle, length, depth, thickness, cfg, animT, branchDepthFromRoot) {
-                if (depth > cfg.maxDepth || length < 2) return;
-
-                /* Animation: sway increases toward tips, uses tree-global time + branch-specific phase */
-                const swayAmp = branchDepthFromRoot * 0.008 * cfg.swayStrength;
-                const swayAngle = Math.sin(animT * cfg.swaySpeed + branchDepthFromRoot * 0.55 + cfg.swayPhase) * swayAmp;
-                const a = angle + swayAngle;
-
-                const endX = x + Math.cos(a) * length;
-                const endY = y + Math.sin(a) * length;
-                const nextThick = thickness * cfg.thickDecay;
-
-                drawSegment(x, y, endX, endY, thickness, depth, cfg.maxDepth, cfg.trunkRgb);
-
-                /* Leaves along segment */
-                const depthRatio = depth / cfg.maxDepth;
-                if (depthRatio >= cfg.leafStartDepth) {
-                    /* Finer spacing: one leaf check every ~10px along the branch */
-                    const leafCount = Math.max(2, Math.floor(length / 10));
-                    const leafFade = (depthRatio - cfg.leafStartDepth) / (1 - cfg.leafStartDepth + 0.001);
-                    for (let i = 0; i < leafCount; i++) {
-                        if (rng() < cfg.leafDensity * leafFade) {
-                            const tl = rng();
-                            const lx = x + (endX - x) * tl;
-                            const ly = y + (endY - y) * tl;
-                            const langle = a + (rng() - 0.5) * Math.PI;
-                            const lsize = cfg.leafSize * (1 + (rng() - 0.5) * 2 * cfg.leafSizeNoise);
-                            drawLeaf(lx, ly, langle, lsize, cfg.leafElongate, cfg.leafRgb1, cfg.leafRgb2, rng);
-                        }
-                    }
-                }
-
-                /* Branching — guaranteed 2 children until max depth */
-                /* Only prune at the very last level to naturalise tips */
-
-                /* Always spawn 2 branches (left + right split); add optional 3rd for bushy mid-tree */
-                const spreadAngles = [
-                    -(cfg.branchAngleRad + (rng() - 0.5) * cfg.angleNoiseRad),
-                     (cfg.branchAngleRad + (rng() - 0.5) * cfg.angleNoiseRad),
-                ];
-                /* Occasionally a 3rd branch for extra fullness in mid canopy (18% — kept modest) */
-                if (depthRatio > 0.3 && depthRatio < 0.70 && rng() < 0.18) {
-                    spreadAngles.push((rng() - 0.5) * cfg.branchAngleRad * 0.6);
-                }
-                for (const da of spreadAngles) {
-                    const lenVariance = 1 + (rng() - 0.5) * 2 * cfg.lenNoise;
-                    const newLen = length * cfg.lenDecay * lenVariance;
-                    /* gravity bends every new branch in the configured direction */
-                    const gravityBend = cfg.gravity * cfg.gravitySign;
-                    drawStochBranch(rng, endX, endY, a + da + gravityBend, newLen, depth + 1, nextThick, cfg, animT, branchDepthFromRoot + 1);
-                }
-            }
-
-            /* Draw a full stochastic tree at (rootX, rootY).
-               lean: small angle offset from straight-up (-PI/2), e.g. -0.10 leans left.
-               cfgOverride: optional per-tree parameter overrides. */
-            function drawTree(rootX, rootY, lean, seed, animT, cfgOverride) {
-                /* Base config — oak-ish defaults, warm earthy tones */
-                const cfg = Object.assign({
-                    maxDepth: 8,                          // 8 levels — full but not excessive
-                    trunkLen: Math.min(H * 0.20, W * 0.14),
-                    lenDecay: 0.68,
-                    lenNoise: 0.22,
-                    branchAngleRad: 30 * Math.PI / 180,
-                    angleNoiseRad: 16 * Math.PI / 180,
-                    gravity: 0,
-                    baseThick: 9,
-                    thickDecay: 0.62,
-                    /* Leaf density — rich canopy */
-                    leafDensity: 0.92,
-                    leafStartDepth: 0.22,               // leaves start early
-                    leafSize: 9,
-                    leafSizeNoise: 0.55,
-                    leafElongate: 1.3,
-                    trunkRgb: hexToRgb('#5a3d1e'),
-                    leafRgb1: hexToRgb('#3d7a3d'),
-                    leafRgb2: hexToRgb('#6db86d'),
-                    trunkCurve: 0.24,
-                    trunkSegs: 5,
-                    /* animation */
-                    swayStrength: 1.0,
-                    swaySpeed: 0.60,
-                    swayPhase: seed * 0.0001,
-                }, cfgOverride);
-
-                const rng = makeTreeRng(seed);
-                const startAngle = -Math.PI / 2 + lean; // upward + lean
-
-                /* Draw curved trunk */
-                const tip = drawCurvedTrunk(rng, rootX, rootY, startAngle,
-                    cfg.trunkLen, cfg.baseThick, cfg);
-
-                /* Branch from tip */
-                drawStochBranch(rng, tip.x, tip.y, tip.angle,
-                    cfg.trunkLen * cfg.lenDecay, 1, cfg.baseThick * cfg.thickDecay,
-                    cfg, animT, 1);
-            }
-
-            /* ── Init ── */
-            function init() {
-                W = canvas.width = window.innerWidth;
-                H = canvas.height = window.innerHeight;
-                groundBaseY = H * 0.88;
-                buildGrass();
-                buildPatches();   // ← add this
-            }
-
-            /* ── Render loop ── */
-            function frame(now) {
-                if (!startTime) startTime = now;
-                const t = (now - startTime) / 1000;
-
-                ctx.clearRect(0, 0, W, H);
-
-                /* 1. Wavy ground shape */
-                drawGroundEdge();
-                drawPatches();
-                /* 2. Back-layer grass (behind trees) */
-                drawGrassSet(grassBlades.filter(b => b.layer < 0.5), t);
-
-                /* 3. Trees — random preset + seed each load */
-                drawTree(W * 0.12, groundY(W * 0.12), 0.12, TREE_SEED_L, t, {
-                    ...PRESET_L, swayPhase: 0.0, gravitySign: +1   // left tree: gravity curves rightward (inward)
-                });
-                drawTree(W * 0.88, groundY(W * 0.88), -0.12, TREE_SEED_R, t, {
-                    ...PRESET_R, swayPhase: 1.4, gravitySign: -1   // right tree: gravity curves leftward (inward)
-                });
-
-                /* 4. Front-layer grass (in front of trees) */
-                drawGrassSet(grassBlades.filter(b => b.layer >= 0.5), t);
-
-                requestAnimationFrame(frame);
-            }
-
-            init();
-            window.addEventListener('resize', init);
-            requestAnimationFrame(frame);
-        })();
-    </script>
+        <p style="margin-top: 20px; font-size: 0.8em; color: #999;">
+            &copy; 2026 Itbaan Safwan.
+        </p>
+    </footer>
 
 </body>
 
