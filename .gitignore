@@ -1,0 +1,54 @@
+# The site only needs index.html, assets/ and writeups/. Everything below is
+# either a separate project with its own repository, a source file for an
+# asset that is already committed under assets/, or scratch output.
+#
+# Patterns are anchored with a leading slash so they match only at the repo
+# root and cannot swallow the lookalike folders inside assets/.
+
+# ---- project source trees (each has its own repo) --------------------------
+# github.com/itbaans/sketch-rnn-pytorch  (checkpoints and datasets, ~180 MB)
+/sketch-rnn-pytorch-main/
+# github.com/itbaans/scrabble_with_ai
+/scrabble_with_ai-main/
+# the packaged Scrabble build: bundled runtime, resources and the .exe
+/Scrabble/
+# attention-map exploration, superseded on the site
+/qwen_attention_exploration-main/
+
+# ---- originals and paper sources -------------------------------------------
+# the web-sized copies the gallery uses are committed in assets/paintings/
+/digital_paint_gallery/
+# figures for these are committed under assets/
+/mtl/
+/mediaeval2025/
+/arabic_nlp_2025/
+# unused since the chapter-5 charts were redrawn as inline SVG
+/figs/
+
+# ---- loose files -----------------------------------------------------------
+/profilePic2.jpg
+/CV_OCLD_STEM Example.pdf
+# screen recordings; the exported gif is committed in assets/scrabble/
+*.mp4
+*.mov
+*.frag
+*.bak.html
+_t.html
+
+# ---- LaTeX build products (cv.tex itself is committed) ---------------------
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.toc
+
+# ---- editors and OS --------------------------------------------------------
+__pycache__/
+*.py[cod]
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

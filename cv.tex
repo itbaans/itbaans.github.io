@@ -1,0 +1,282 @@
+%=====================================================================
+%  Curriculum Vitae -- Itbaan Safwan
+%
+%  Structure follows the grad-school CV advice:
+%    - Times New Roman throughout, name at 20pt bold
+%    - contact details directly under the name
+%    - EDUCATION first, then RESEARCH EXPERIENCE (research-based programs)
+%    - PUBLICATIONS, CONFERENCE PRESENTATIONS, TEACHING, PROFESSIONAL
+%    - no skills section and no summary; skills are shown inside the bullets
+%    - organisation bold left, location right; role/supervisor left, dates right
+%    - 3 to 5 bullets per entry, quantified where possible
+%
+%  Entries are wrapped so they never split across a page break.
+%  Compile with pdflatex (run twice, for hyperref).
+%=====================================================================
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}          % Times New Roman text and math
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{needspace}
+\usepackage[hidelinks]{hyperref}
+
+\hypersetup{
+  colorlinks=true, linkcolor=black, urlcolor=black,
+  pdftitle={Itbaan Safwan -- Curriculum Vitae},
+  pdfauthor={Itbaan Safwan}
+}
+
+\pagestyle{plain}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\raggedright
+
+%---------------------------------------------------------------------
+%  Structure
+%---------------------------------------------------------------------
+
+% ALL CAPS section heading. \needspace keeps a heading from being
+% stranded at the foot of a page.
+\newcommand{\cvsection}[1]{%
+  \Needspace*{6\baselineskip}%
+  \vspace{1.0em}%
+  {\bfseries\uppercase{#1}}\par
+  \vspace{0.15em}\hrule\vspace{0.5em}%
+}
+
+% Keeps a whole entry (heading, sub-line and bullets) on one page.
+\newenvironment{entrybox}
+  {\par\vspace{0.5em}\noindent\begin{minipage}{\linewidth}}
+  {\end{minipage}\par}
+
+% Organisation flush left in bold, location flush right
+\newcommand{\orgline}[2]{\textbf{#1}\hfill #2\par}
+
+% Role or supervisor flush left, dates flush right
+\newcommand{\roleline}[2]{\textit{#1}\hfill #2\par\vspace{0.15em}}
+
+\setlist[itemize]{leftmargin=1.3em, topsep=2pt, itemsep=1.5pt,
+                  parsep=0pt, label=\textbullet}
+
+%=====================================================================
+\begin{document}
+
+%---------------------------------------------------------------------
+%  Header
+%---------------------------------------------------------------------
+\begin{center}
+  {\fontsize{20}{24}\selectfont\bfseries Itbaan Safwan}\\[0.5em]
+  \href{mailto:kodvavi100@outlook.com}{kodvavi100@outlook.com} $\vert$
+  \href{https://www.linkedin.com/in/itbaan-safwan-845213254}{LinkedIn} $\vert$
+  \href{https://github.com/itbaans}{GitHub}
+\end{center}
+
+%---------------------------------------------------------------------
+\cvsection{Education}
+
+\begin{entrybox}
+  \orgline{B.S. Computer Science}{Karachi, Pakistan}
+  \roleline{Institute of Business Administration}{June 2026}
+  \begin{itemize}
+    \item CGPA: 3.47 / 4.00. Relevant coursework: Neural Networks and Deep Learning,
+          Introduction to Natural Language Processing, Computer Vision, Linear Algebra,
+          Numerical Analysis.
+    \item Final year project: \textit{Visual Question Answering for Gastrointestinal Imaging with
+          Multimodal Reasoning}. Advisor: Dr.\ Muhammad Atif Tahir.
+  \end{itemize}
+\end{entrybox}
+
+%---------------------------------------------------------------------
+\cvsection{Research Experience}
+
+\begin{entrybox}
+  \orgline{Institute of Business Administration}{Karachi, Pakistan}
+  \roleline{Lead researcher \textbar\ Supervisor: Dr.\ Muhammad Atif Tahir}{2025 -- 2026}
+  \begin{itemize}
+    \item Led \textit{Towards Grounded GI Endoscopy VQA via Multi-Task Learning on Small VLMs} as
+          first author, testing whether auxiliary visual supervision makes small vision-language
+          models answer medical questions from the correct visual evidence.
+    \item Built the auxiliary supervision from existing resources rather than new annotation,
+          deriving Grad-CAM localisation from a domain-pretrained GastroNet-5M classifier for
+          classes without expert masks, and generating visual descriptions with Gemma-27B that
+          were restricted to observable features.
+    \item Fine-tuned three backbones (Florence-2, Qwen3.5, InternVL3.5) jointly on localisation,
+          description and VQA using QLoRA in PyTorch on a single RTX 3090 Ti, keeping training
+          conditions matched so the three could be compared; only the VQA objective runs at
+          inference, so the auxiliary tasks add no inference cost.
+    \item Improved VQA accuracy on all three backbones (Florence-2 from 79.26\% to 82.00\%), with
+          the largest gains on appearance and spatial questions and gains increasing with
+          question complexity.
+    \item Evaluated grounding from the model's internal representations using token-to-patch
+          cosine similarity rather than segmentation outputs; Florence-2 pointing-game accuracy
+          rose from 0.333 to 0.805 in-distribution and 0.142 to 0.645 out-of-distribution
+          (Wilcoxon signed-rank, $p = 1.47 \times 10^{-36}$).
+    \item Accepted as a first-author paper and poster presentation at the EMA4MICCAI Workshop,
+          MICCAI 2026.
+  \end{itemize}
+\end{entrybox}
+
+\begin{entrybox}
+  \orgline{MediaEval 2025 Medico Shared Task}{Karachi, Pakistan (presented online)}
+  \roleline{Team lead \textbar\ Supervisor: Dr.\ Muhammad Atif Tahir}{2025}
+  \begin{itemize}
+    \item Led the team submission \textit{Multi-Task Learning for Visually Grounded Reasoning in
+          Gastrointestinal VQA}, covering both subtasks: answering clinical questions about
+          endoscopy images, and explaining those answers in natural language.
+    \item Fine-tuned one Florence-2 backbone on three objectives at once with LoRA, selected at
+          inference by a task-specific prompt, so a single model served all three tasks.
+    \item Constructed two of the three training sets, generating 3,344 explanations with Gemma-27B
+          under a prompt that suppressed medical terminology, and assembling 4,337 text-mask pairs
+          from ClipSeg pseudo-masks and expert masks in Kvasir-SEG and Kvasir-Instrument.
+    \item Showed that adapter capacity trades language quality against localisation under
+          VQA-only supervision, and that joint training removes the trade-off, raising IoU from
+          0.2961 to 0.7403 at the same rank while BLEU also improved.
+    \item Scored BLEU 0.4539, ROUGE-L 0.6531, CHrF++ 63.79 and BERTScore F1 0.9479 on the official
+          private test set, earning the Distinctive Award and 2nd place in both subtasks.
+  \end{itemize}
+\end{entrybox}
+
+\begin{entrybox}
+  \orgline{MAHED Shared Task, ArabicNLP 2025}{Karachi, Pakistan}
+  \roleline{Sole author, independent project}{2025}
+  \begin{itemize}
+    \item Ran an independent comparison of three multimodal fusion architectures for Arabic
+          hateful meme detection, holding the backbones fixed (CLIP ViT-B/32 for the image,
+          MARBERT for the Arabic caption) so that only the point of fusion varied.
+    \item Implemented and trained all three systems in PyTorch: cross-attention fusion,
+          progressive 1-D convolutional fusion, and a two-stage model using CLIP-style contrastive
+          pre-training followed by gated classification.
+    \item Handled a heavily skewed label distribution with a weighted focal loss rather than
+          cross-entropy.
+    \item Diagnosed an experimental error in the submitted runs, where all three models had been
+          trained on the 70\% validation split; after retraining on the full labelled set,
+          progressive convolutional fusion reached 0.779 macro F1, 6.1 points above the submitted
+          result and 0.014 above the other two architectures.
+    \item Published as a sole-authored working-notes paper in the ACL Anthology, at ArabicNLP 2025
+          co-located with EMNLP 2025.
+  \end{itemize}
+\end{entrybox}
+
+%---------------------------------------------------------------------
+\cvsection{Publications}
+
+\begin{entrybox}
+\begin{enumerate}[leftmargin=1.6em, topsep=2pt, itemsep=5pt, parsep=0pt]
+  \item \textbf{Safwan, I.}, Khan, R., Shaikh, M. A., \& Tahir, M. A. (2026). Towards Grounded GI
+        Endoscopy VQA via Multi-Task Learning on Small VLMs. \textit{EMA4MICCAI Workshop, MICCAI
+        2026}. (accepted, poster presentation)
+        \href{https://arxiv.org/pdf/2607.27122}{[preprint]}
+  \item \textbf{Safwan, I.}, Shaikh, M. A., Haaris, M., Khan, R., \& Tahir, M. A. (2025).
+        Multi-Task Learning for Visually Grounded Reasoning in Gastrointestinal VQA.
+        \textit{Proceedings of the MediaEval 2025 Multimedia Evaluation Workshop}, CEUR-WS.
+        \href{https://arxiv.org/pdf/2511.04384}{[paper]}
+  \item \textbf{Safwan, I.} (2025). Thinking Nodes at MAHED: A Comparative Study of Multimodal
+        Architectures for Arabic Hateful Meme Detection. \textit{Proceedings of ArabicNLP 2025},
+        712--719. Association for Computational Linguistics.
+        \href{https://aclanthology.org/2025.arabicnlp-sharedtasks.98.pdf}{[paper]}
+\end{enumerate}
+\end{entrybox}
+
+%---------------------------------------------------------------------
+\cvsection{Conference Presentations}
+
+\begin{entrybox}
+\begin{itemize}
+  \item EMA4MICCAI Workshop, MICCAI 2026. \textbf{Poster presentation}, Oct 2026.
+        \textit{Towards Grounded GI Endoscopy VQA via Multi-Task Learning on Small VLMs}.
+  \item MediaEval 2025 Multimedia Evaluation Workshop, Dublin and online.
+        \textbf{Oral presentation}, Oct 2025. \textit{Multi-Task Learning for Visually Grounded
+        Reasoning in Gastrointestinal VQA}.
+\end{itemize}
+\end{entrybox}
+
+%---------------------------------------------------------------------
+\cvsection{Teaching Experience}
+
+\begin{entrybox}
+  \orgline{Institute of Business Administration}{Karachi, Pakistan}
+  \roleline{Teaching Assistant, Theory of Automata}{Jan 2026 -- May 2026}
+  \begin{itemize}
+    \item Ran weekly tutorials on the core concepts of the course, working through problem sets
+          with students.
+    \item Supported students through labs and office hours, and worked with faculty to design,
+          evaluate and grade assignments.
+  \end{itemize}
+\end{entrybox}
+
+\begin{entrybox}
+  \orgline{Institute of Business Administration}{Karachi, Pakistan}
+  \roleline{Teaching Assistant, Neural Networks and Deep Learning}{Aug 2025 -- Dec 2025}
+  \begin{itemize}
+    \item Supported students through labs and office hours, covering both the theory and its
+          implementation in code.
+    \item Worked with faculty to design, evaluate and grade assignments, and to bring current
+          tooling into the course material.
+  \end{itemize}
+\end{entrybox}
+
+%---------------------------------------------------------------------
+\cvsection{AI Engineering Experience}
+
+\begin{entrybox}
+  \orgline{Cervana AI}{Karachi, Pakistan}
+  \roleline{AI Research Intern}{June 2026 -- August 2026}
+  \begin{itemize}
+    \item Benchmarked 9 Arabic text-to-speech models on word error rate (measured with
+          Whisper-Large-v3 ASR), UTMOS naturalness, F0 prosody variation and real-time factor;
+          the model selected reached 0.046 WER at 0.23x real time.
+    \item Fine-tuned an open-source TTS model for Urdu on an AWS GPU instance and reworked it for
+          streaming, which brought end-to-end latency down from about 1000\,ms to about
+          200\,ms.
+    \item Wrote the serving API in FastAPI with voice cloning, API-key authentication and
+          per-key quotas in SQLite, containerised it with Docker, and deployed it on an AWS EC2
+          GPU instance.
+  \end{itemize}
+\end{entrybox}
+
+\begin{entrybox}
+  \orgline{Systems Limited}{Karachi, Pakistan}
+  \roleline{AI Intern}{July 2025 -- September 2025}
+  \begin{itemize}
+    \item Built an agentic system for lead generation with LangGraph and the Gemini API,
+          structured as a ReAct loop that updates lead state, keeps its own memory, and queries
+          internal databases.
+    \item Implemented a multi-tier retrieval pipeline over keyword, structured and unstructured
+          sources, ordered by priority so that fewer model calls were needed per query.
+    \item Prototyped a voice-to-voice agent in Streamlit using Whisper and KokoroTTS over
+          real-time sockets, constrained to run on CPU only.
+  \end{itemize}
+\end{entrybox}
+
+%---------------------------------------------------------------------
+\clearpage
+\cvsection{Leadership and Outreach}
+
+\begin{entrybox}
+  \orgline{Google Developer Groups}{Karachi, Pakistan}
+  \roleline{Tech Lead for Generative AI}{2026}
+  \begin{itemize}
+    \item Designed and delivered a two-stage generative AI workshop, introducing the concepts from
+          first principles and then running hands-on experimentation.
+    \item Reached 50+ students through interactive sessions aimed at building confidence and
+          practical exposure to the field.
+  \end{itemize}
+\end{entrybox}
+
+\begin{entrybox}
+  \orgline{IBA Computer Science and Data Science Society}{Karachi, Pakistan}
+  \roleline{Module Head, Machine Learning and NLP}{2025, 2026}
+  \begin{itemize}
+    \item Led the Machine Learning and Natural Language Processing competition modules for 100+
+          participants, writing original problem statements to reward creative and rigorous
+          solutions.
+    \item Curated high-difficulty, leakage-free datasets, including a geopolitical NLP challenge
+          built from structured news data.
+    \item Evaluated submissions on both leaderboard performance and written methodology reports.
+  \end{itemize}
+\end{entrybox}
+
+\end{document}
