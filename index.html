@@ -378,105 +378,83 @@
   <h2 class="ch-title">research statement</h2>
   <div class="prose">
 
-    <h3 class="ch-sub">Interpretability and VLMs</h3>
+    <h3 class="ch-sub">Understanding and improving small vision-language models</h3>
 
-    <p>My interest in interpretability research started, like it does for a lot of people, from how interesting it
-    is to look inside a neural network at all. It became more concrete after reading Chris Olah's
-    work on interpretability. One post on
-    <a href="https://colah.github.io/posts/2014-03-NN-Manifolds-Topology/" target="_blank"
-    rel="noopener">manifolds and topology</a> in particular gave me a way to think about what a
-    network is actually doing. A network progressively transforms the geometry of the data, so
-    that structure which is hard to separate in the input becomes easy to separate later. Learning
-    is not only about adding neurons or dimensions, it is about transforming the representation
-    itself. That idea, along with the work on feature visualisation and
-    <a href="https://distill.pub/2020/circuits/" target="_blank" rel="noopener">circuits</a> in
-    Distill, made me want to treat networks as systems whose internals can be studied, and not
-    only as models that produce useful outputs.</p>
+    <p>My research interests are centered on a simple question: what makes a vision-language model
+    capable, and can understanding those internal mechanisms help us build better small
+    models?</p>
 
-    <p>On the other hand, I was also working with VLMs during my research in the final years of
-    my undergraduate degree. I compared
-    <a href="https://aclanthology.org/2025.arabicnlp-sharedtasks.98.pdf" target="_blank"
-    rel="noopener">three fusion architectures</a> for Arabic hateful meme detection, and then in my
-    <a href="https://arxiv.org/pdf/2511.04384" target="_blank" rel="noopener">MediaEval
-    submission</a> and my
-    <a href="https://arxiv.org/pdf/2607.27122" target="_blank" rel="noopener">MICCAI 2026 workshop
-    paper</a> I looked at whether a richer training signal helps, by supervising the model on where
-    to look rather than only on the final answer. Those projects showed me that there are many
-    ways to improve a VLM: change the architecture, change how it is trained, or change what it
-    learns from. Eventually that led me to a different question. Instead of modifying the
-    architecture or the objective again, can interpretability tell us what these models build
-    inside, and point to better ways of training small ones?</p>
+    <p>I arrived at this question through my work on multimodal learning. I first studied how
+    different fusion architectures affected <a href="https://aclanthology.org/2025.arabicnlp-sharedtasks.98.pdf" target="_blank" rel="noopener">Arabic hateful-meme detection</a>,
+    and later worked on <a href="https://arxiv.org/pdf/2607.27122" target="_blank" rel="noopener">medical visual question answering</a> (accepted at the EMA4MICCAI workshop, MICCAI 2026), where I
+    explored whether <a href="https://arxiv.org/pdf/2511.04384" target="_blank" rel="noopener">richer supervision</a> could improve both answer quality
+    and visual grounding. Across these projects, I approached model improvement mainly through
+    changes in architecture, objectives, and training signals. Over time, however, I became
+    increasingly interested in a more basic question: what had these changes actually caused the
+    model to learn internally?</p>
 
-    <h3 class="ch-sub">Research direction moving forward</h3>
+    <p>Work on neural network representations, particularly
+    <a href="https://colah.github.io/posts/2014-03-NN-Manifolds-Topology/" target="_blank" rel="noopener">Chris Olah's writing</a> on how networks progressively transform
+    representations, gave me a useful way to think about this. Rather than treating a model only
+    as a function that maps an input to an output, I became interested in studying how information
+    is represented and transformed across layers, and how those internal computations give rise to
+    particular capabilities.</p>
 
-    <p>This is where my current interest lies, at the intersection of mechanistic interpretability
-    and vision-language models.</p>
+    <h3 class="ch-sub">Research direction</h3>
 
-    <p>A recent benchmark, <a href="https://arxiv.org/abs/2602.05382v1" target="_blank" rel="noopener">VRIQ</a>, caught my attention
-    because it looked at where current VLMs fail on visual reasoning. A large share of the failures
-    turned out to be perception errors rather than reasoning errors. The model fails what looks
-    like a reasoning task because it read something in the image wrongly at an earlier stage.</p>
+    <p>I am especially interested in applying this perspective to small vision-language
+    models.</p>
 
-    <p>That connects to the ICLR 2025 paper by
-    <a href="https://arxiv.org/abs/2410.07149" target="_blank" rel="noopener">Neo et al.</a>, which
-    studied how visual information is represented and processed across the layers of a VLM. They
-    found that visual tokens contribute substantially to the prediction, and that their
-    representations become more aligned with textual concepts deeper in the network.</p>
+    <p><a href="https://arxiv.org/abs/2602.05382v1" target="_blank" rel="noopener">Recent work</a> suggests that many apparent reasoning failures in VLMs
+    can originate earlier in the pipeline, when visual information is represented incorrectly or
+    fails to become usable by later layers. This raises a set of questions that I want to explore
+    more systematically: where do particular visual capabilities emerge inside a VLM? How are they
+    represented and transformed across layers? And how do these mechanisms differ between smaller
+    and larger models?</p>
 
-    <p>So rather than asking only whether a model answers a visual question correctly, I want to
-    ask a more mechanistic question: at what point in the network does the information needed for
-    a perceptual decision become strong enough to determine the answer?</p>
+    <p>The last question is particularly important to me. Capability gaps between small and large
+    VLMs are usually measured at the output level, but similar outputs can hide very different
+    internal computations. A smaller model may fail not simply because it has fewer parameters,
+    but because the information required for a capability is represented, integrated, or
+    propagated differently.</p>
 
-    <p>I see this as a bridge between my earlier work and the interpretability literature. Until
-    now I have approached VLMs by asking how to change the architecture or the training to improve
-    performance. I now want to start from the other end, by asking what representations and
-    computations are already emerging inside the model, and how they relate to particular
-    capabilities.</p>
+    <p>Understanding these differences could also provide a more informed basis for improving
+    small models. Rather than treating knowledge transfer or distillation only as a problem of
+    matching outputs or hidden states, I am interested in whether identifying the representations
+    and computations responsible for specific capabilities can reveal what actually needs to be
+    transferred or strengthened in the smaller model.</p>
 
-    <p>This also connects to a longer-term question I want to explore, which is whether these
-    internal representations can explain the gap between large and small VLMs. A small model may
-    not simply have less capacity or less knowledge. It may build a different internal
-    representation for the same capability, and that difference is invisible if you only compare
-    outputs.</p>
+    <h3 class="ch-sub">Current experiment</h3>
 
-    <p>If I can identify the representations that matter for a capability in a larger model, and
-    understand how they differ in a smaller one, that could give a more informed basis for
-    compression or knowledge distillation. I do not treat this as a fixed hypothesis, and I am not
-    claiming that interpretability will necessarily produce a better distillation method. It is the
-    direction I want to investigate: first understand the mechanism behind a capability, then see
-    whether that understanding helps transfer it. Recent work on how distillation changes internal
-    circuits suggests that a student can reorganise its computation rather than copy the teacher's,
-    which is part of why the question interests me.</p>
+    <p>As an initial step, I have been studying visual information processing in a recent 3B
+    vision-language model. I first replicated
+    <a href="https://arxiv.org/abs/2410.07149" target="_blank" rel="noopener">prior layer-wise analysis</a> of visual representations, and then designed a
+    <a href="writeups/vlm-interp/index.html" target="_blank" rel="noopener">controlled activation-patching experiment</a> using
+    synthetic scenes where a single visual property could be changed at a time.</p>
 
-    <h3 class="ch-sub">The experiment</h3>
+    <p>The results suggest that different perceptual capabilities become causally relevant at
+    different depths. Spatial relations showed their strongest recovery much earlier in the
+    network, while properties such as colour, shape, and orientation depended on later layers.
+    Patching the changed object produced substantially larger effects than patching unchanged
+    objects, providing a control that the intervention was tracking the relevant visual
+    information rather than producing a general perturbation.</p>
 
-    <p>As a first step I wanted to study perception in a setting where the visual information
-    can be controlled exactly. I replicated the analysis from the ICLR paper on a more recent 3B
-    vision-language model from Liquid AI, and then designed a new experiment that uses activation
-    patching on synthetic scenes to isolate one perceptual ability at a time. The setup is
-    described in <a href="#" onclick="openChapter(4);return false;">chapter 05</a> of the
-    timeline, and the full write-up with every result is
-    <a href="writeups/vlm-interp/" target="_blank" rel="noopener">here</a>.</p>
+    <p>I do not see <a href="#" onclick="openChapter(4);return false;">this experiment</a> as an
+    answer to the broader question, but as a way to make it experimentally tractable. It gives me
+    a controlled setting for asking when a capability becomes available to the model and which
+    parts of the network are responsible for carrying it forward.</p>
 
-    <p>In the initial results the categories did not behave the same way. For counting and
-    relation the original answer could be recovered by patching in the early-to-middle layers,
-    around layers 5 to 13, after which patching had little effect. For the other categories the
-    same effect appeared later, around layer 21 and beyond. I am still working through what this
-    means.</p>
+    <h3 class="ch-sub">Longer-term direction</h3>
 
-    <p>I see this as a modest first step rather than an answer. What it gives me is a concrete way
-    to ask whether different perceptual abilities are built through different internal
-    representations.</p>
+    <p>My longer-term goal is to understand capability differences between small and large VLMs at
+    the level of representation and computation, and then test whether that understanding can lead
+    to better ways of improving small models.</p>
 
-    <h3 class="ch-sub">Conclusion</h3>
-
-    <p>My longer-term interest is in understanding what gives models their capabilities at the
-    level of representation and computation, particularly in vision-language models. I started from
-    questions about architectures and training, and that has gradually led me to questions about
-    what the model has actually learned inside.</p>
-
-    <p>What I care about most is approaching this incrementally. The broader question is ambitious,
-    but meaningful research can start from smaller controlled questions.</p>
+    <p>I am particularly interested in moving from descriptive analysis to targeted intervention:
+    identifying where a capability breaks down, determining what differs internally between models
+    that possess it and those that do not, and using those findings to guide training,
+    architecture, or knowledge-transfer methods. The broader objective is not only to make small
+    models more capable, but to develop a clearer account of why particular improvements work.</p>
 
   </div>
 </article>
@@ -2556,7 +2534,7 @@ y = <span class="c-se">self</span>.<span class="c-fn">fc_out</span>(outs)</pre>
       understand where the perception abilities activate inside the model. The experiment uses
       activation patching, on synthetic images and prompts built for the purpose.</p>
 
-      <p class="pp-links"><a href="writeups/vlm-interp/" target="_blank" rel="noopener">the full write-up,
+      <p class="pp-links"><a href="writeups/vlm-interp/index.html" target="_blank" rel="noopener">the full write-up,
       with every result</a>
       <a href="https://github.com/itbaans/vlm-interp-perception" target="_blank" rel="noopener">the code</a></p>
 
